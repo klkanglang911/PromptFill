@@ -233,12 +233,27 @@ const INITIAL_BANKS = {
     category: "character",
     options: ["女性角色", "男性角色", "机甲少女", "怪物拟人化", "奇幻种族(精灵/恶魔)"]
   },
+  character_companion: {
+    label: "合影角色",
+    category: "character",
+    options: ["死侍 (Deadpool)", "超人 (Superman)", "爱因斯坦 (Einstein)", "神奇女侠 (Wonder Woman)", "钢铁侠 (Iron Man)", "皮卡丘 (Pikachu)", "哥斯拉 (Godzilla)", "初音未来 (Hatsune Miku)"]
+  },
   layout_focus: {
     label: "构图重心",
     category: "visual",
     options: ["全身立绘", "半身肖像", "动态战斗姿势", "背影回眸"]
   },
-  // Example 1 related
+  // Grid Poses (1-9) - Sharing same options initially but distinct for selection
+  grid_pose_1: { label: "静态动作 1", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  grid_pose_2: { label: "静态动作 2", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  grid_pose_3: { label: "静态动作 3", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  grid_pose_4: { label: "静态动作 4", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  grid_pose_5: { label: "静态动作 5", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  grid_pose_6: { label: "静态动作 6", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  grid_pose_7: { label: "静态动作 7", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  grid_pose_8: { label: "静态动作 8", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  grid_pose_9: { label: "静态动作 9", category: "visual", options: ["前景手指虚化", "目光锁定镜头", "单色下巴托手", "透过模糊肩带拍摄", "正面特写阴影", "斜角拍摄", "双手置于锁骨", "坐姿半身侧面", "侧面微距水滴", "闭眼仰头享受", "用手遮挡阳光", "回眸一笑", "吹泡泡糖特写"] },
+  
   camera_angle: {
     label: "拍摄角度",
     category: "visual",
@@ -299,6 +314,18 @@ const INITIAL_BANKS = {
     category: "visual",
     options: ["漫画网格笔记本", "蓝图设计稿纸", "工业风金属背景", "极简纯色背景"]
   },
+  // Fashion Template additions
+  fashion_deconstruct: {
+    label: "穿搭解构",
+    category: "item",
+    options: ["整齐折叠的外套和精致的高跟鞋", "散落的配饰与包包", "悬挂的衬衫与百褶裙", "堆叠的金属配饰与皮带"]
+  },
+  toy_companion: {
+    label: "互动公仔",
+    category: "item",
+    options: ["Labubu艺术公仔", "暴力熊积木熊", "泡泡玛特Molly", "复古泰迪熊", "赛博朋克机械狗"]
+  },
+  
   // Old ones preserved for compatibility or other templates
   lens_param: {
     label: "镜头参数",
@@ -335,6 +362,7 @@ const INITIAL_BANKS = {
 const INITIAL_DEFAULTS = {
   role: "游戏与动漫概念美术设计大师",
   subject: "女性角色",
+  character_companion: "死侍 (Deadpool)",
   layout_focus: "全身立绘",
   camera_angle: "脸颊和颈部特写",
   connectors: "手绘箭头或引导线",
@@ -348,7 +376,20 @@ const INITIAL_DEFAULTS = {
   private_items: "震动棒与项圈",
   art_style: "高质量的 2D 插画风格",
   background_style: "漫画网格笔记本",
+  fashion_deconstruct: "整齐折叠的外套和精致的高跟鞋",
+  toy_companion: "Labubu艺术公仔",
   
+  // Grid defaults
+  grid_pose_1: "前景手指虚化",
+  grid_pose_2: "目光锁定镜头",
+  grid_pose_3: "单色下巴托手",
+  grid_pose_4: "透过模糊肩带拍摄",
+  grid_pose_5: "正面特写阴影",
+  grid_pose_6: "斜角拍摄",
+  grid_pose_7: "双手置于锁骨",
+  grid_pose_8: "坐姿半身侧面",
+  grid_pose_9: "侧面微距水滴",
+
   // Legacy defaults
   lens_param: "85mm, f/1.8",
   lighting: "大型顶置柔光箱，轻微侧向反射光",
@@ -400,16 +441,16 @@ const TEMPLATE_PHOTO_GRID = `### Photo Grid Composition (九宫格摄影)
 
 **灯光设置:** {{lighting}}。
 
-**照片细节包括：**
-1. {{camera_angle}}，前景手指虚化 ({{lens_param}})；
-2. 目光锁定镜头，可见顶部反光 ({{lens_param}})；
-3. 单色下巴托手肖像，画面填充强烈 ({{lens_param}})；
-4. 透过模糊的肩带拍摄的半遮肩照 ({{lens_param}})；
-5. 正面特写，面部阴影交错 ({{lens_param}})；
-6. 斜角拍摄的原始人像，头发蓬乱 ({{lens_param}})；
-7. 双手置于锁骨附近的特写 ({{lens_param}})；
-8. 坐姿半身侧面照，画面边缘虚化 ({{lens_param}})；
-9. 侧面微距照，单颗水滴高光 ({{lens_param}})。
+**照片细节包括 (Grid Details)：**
+1. {{grid_pose_1}}，画面风格统一 ({{lens_param}})；
+2. {{grid_pose_2}} ({{lens_param}})；
+3. {{grid_pose_3}} ({{lens_param}})；
+4. {{grid_pose_4}} ({{lens_param}})；
+5. {{grid_pose_5}} ({{lens_param}})；
+6. {{grid_pose_6}} ({{lens_param}})；
+7. {{grid_pose_7}} ({{lens_param}})；
+8. {{grid_pose_8}} ({{lens_param}})；
+9. {{grid_pose_9}} ({{lens_param}})。
 
 **后期处理:** 原始素材，平滑对比度，编辑柔化效果。`;
 
@@ -421,15 +462,15 @@ const TEMPLATE_FASHION_MOODBOARD = `### Fashion Illustration Moodboard (时尚�
 
 **贴纸内容:**
 - **中央:** {{sticker_core}}，光线明亮。
-- **左侧:** 对这套穿搭的解构贴纸，整齐折叠的外套和精致的高跟鞋。
-- **右下角:** 关键的隐藏层贴纸：一套折叠整齐的高级白色蕾丝内衣，展现细腻纹理。
-- **互动元素:** 一只穿着粉色系、与用户服装呼应的Labubu艺术公仔贴纸正趴在一个手绘对话框上。
+- **左侧:** {{fashion_deconstruct}}。
+- **右下角:** 关键的隐藏层贴纸：一套折叠整齐的内衣，展现细腻纹理。
+- **互动元素:** 一只穿着粉色系、与用户服装呼应的 {{toy_companion}} 正趴在一个手绘对话框上。
 
 **装饰细节:** 周围装饰着蜡笔质感的 {{sticker_decor}} 和潦草的中文书法标注OOTD。
 **注意:** 画面中绝无任何人手、笔或物理桌面背景，纯粹的平面艺术插画。`;
 
-const TEMPLATE_FUN_SELFIE = `### Fun Selfie with Deadpool (死侍合影)
-让死侍站在男人旁边，{{action_pose}}，同时对着镜头露出调皮的表情。
+const TEMPLATE_CHARACTER_SELFIE = `### Character Selfie (人物趣味合影)
+让 {{character_companion}} 站在男人旁边，{{action_pose}}，同时对着镜头露出调皮的表情。
 
 **背景:** 以 {{background_scene}} 为背景。
 
@@ -455,9 +496,9 @@ const INITIAL_TEMPLATES = [
     selections: {}
   },
   {
-    id: "tpl_deadpool",
-    name: "死侍趣味合影",
-    content: TEMPLATE_FUN_SELFIE,
+    id: "tpl_character_selfie",
+    name: "人物趣味合影",
+    content: TEMPLATE_CHARACTER_SELFIE,
     selections: {}
   }
 ];
@@ -935,13 +976,13 @@ const CategoryManager = ({ isOpen, onClose, categories, setCategories, banks, se
 
 const App = () => {
   // Global State with Persistence
-  const [banks, setBanks] = useStickyState(INITIAL_BANKS, "app_banks_v4"); 
-  const [defaults, setDefaults] = useStickyState(INITIAL_DEFAULTS, "app_defaults_v4");
+  const [banks, setBanks] = useStickyState(INITIAL_BANKS, "app_banks_v5"); 
+  const [defaults, setDefaults] = useStickyState(INITIAL_DEFAULTS, "app_defaults_v5");
   const [language, setLanguage] = useStickyState("cn", "app_language_v1"); 
   const [categories, setCategories] = useStickyState(INITIAL_CATEGORIES, "app_categories_v1"); // New state
   
-  const [templates, setTemplates] = useStickyState(INITIAL_TEMPLATES, "app_templates_v4");
-  const [activeTemplateId, setActiveTemplateId] = useStickyState("tpl_default", "app_active_template_id_v2");
+  const [templates, setTemplates] = useStickyState(INITIAL_TEMPLATES, "app_templates_v5");
+  const [activeTemplateId, setActiveTemplateId] = useStickyState("tpl_default", "app_active_template_id_v3");
   
   // UI State
   const [bankSidebarWidth, setBankSidebarWidth] = useStickyState(420, "app_bank_sidebar_width_v1"); // Default width increased to 420px for 2-column layout
