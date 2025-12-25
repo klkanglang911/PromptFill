@@ -10,7 +10,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 安装前端依赖
-RUN npm ci
+RUN npm install
 
 # 复制前端源代码
 COPY src/ ./src/
@@ -32,7 +32,7 @@ COPY server/package*.json ./
 # 安装后端生产依赖
 # better-sqlite3 需要编译，安装构建工具
 RUN apk add --no-cache python3 make g++ && \
-    npm ci --production && \
+    npm install --omit=dev && \
     apk del python3 make g++
 
 # ============ 阶段 3：生产镜像 ============
