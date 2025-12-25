@@ -27,7 +27,7 @@ import { Variable, VisualEditor, PremiumButton, EditorToolbar, Lightbox, Templat
 import MobileTabBar from './components/MobileTabBar';
 
 // --- 组件：图片 3D 预览弹窗 (优化性能，状态局部化) ---
-const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_STYLES, displayTag, setActiveTemplateId, setDiscoveryView, setZoomedImage, setMobileTab }) => {
+const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_STYLES, displayTag, setActiveTemplateId, setDiscoveryView, setZoomedImage, setMobileTab, requireAuth }) => {
   const [modalMousePos, setModalMousePos] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   const touchStartY = useRef(0);
@@ -236,10 +236,11 @@ const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (requireAuth && !requireAuth()) return; // 需要登录
                           if (template) {
                             setActiveTemplateId(template.id);
                             setDiscoveryView(false);
-                            if (setMobileTab) setMobileTab('editor'); 
+                            if (setMobileTab) setMobileTab('editor');
                             setZoomedImage(null);
                           }
                         }}
@@ -392,6 +393,7 @@ const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_
                         <div className={`w-full flex flex-col gap-4 mt-auto`}>
                             <PremiumButton
                                 onClick={() => {
+                                    if (requireAuth && !requireAuth()) return; // 需要登录
                                     setActiveTemplateId(template.id);
                                     setDiscoveryView(false);
                                     setZoomedImage(null);
@@ -673,7 +675,17 @@ const App = () => {
       console.error('登出失败:', error);
     }
   };
-  
+
+  // 权限检查：游客只能访问首页，其他页面需要登录
+  const requireAuth = React.useCallback((action) => {
+    if (currentUser) {
+      return true; // 已登录，允许访问
+    }
+    // 未登录，弹出登录框
+    setIsAuthModalOpen(true);
+    return false;
+  }, [currentUser]);
+
   // 移动端：首页是否展示完全由 mobileTab 控制，避免 isDiscoveryView 残留导致其它 Tab 白屏
   // 桌面端：保持现有 isDiscoveryView 行为（不影响已正常的桌面端）
   const showDiscoveryOverlay = isMobileDevice ? mobileTab === "home" : isDiscoveryView;
@@ -2313,7 +2325,7 @@ const App = () => {
       {/* Discovery View (Full Screen Overlay) */}
       {showDiscoveryOverlay ? (
         <div style={{ display: zoomedImage ? 'none' : 'block' }}>
-          <DiscoveryView 
+          <DiscoveryView
           filteredTemplates={filteredTemplates}
           setActiveTemplateId={setActiveTemplateId}
           setDiscoveryView={handleSetDiscoveryView}
@@ -2335,6 +2347,8 @@ const App = () => {
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
           setRandomSeed={setRandomSeed}
+          requireAuth={requireAuth}
+          currentUser={currentUser}
         />
         </div>
       ) : (
@@ -2911,9 +2925,9 @@ const App = () => {
       {/* --- Image Lightbox --- */}
       {/* --- Image View Modal --- */}
       {zoomedImage && (
-        <ImagePreviewModal 
+        <ImagePreviewModal
           zoomedImage={zoomedImage}
-          template={INITIAL_TEMPLATES_CONFIG.find(t => t.imageUrl === zoomedImage || t.imageUrls?.includes(zoomedImage)) || 
+          template={INITIAL_TEMPLATES_CONFIG.find(t => t.imageUrl === zoomedImage || t.imageUrls?.includes(zoomedImage)) ||
                    templates.find(t => t.imageUrl === zoomedImage || t.imageUrls?.includes(zoomedImage)) ||
                    (activeTemplate.imageUrl === zoomedImage || activeTemplate.imageUrls?.includes(zoomedImage) ? activeTemplate : null)}
           language={language}
@@ -2924,6 +2938,7 @@ const App = () => {
           setDiscoveryView={setDiscoveryView}
           setZoomedImage={setZoomedImage}
           setMobileTab={setMobileTab}
+          requireAuth={requireAuth}
         />
       )}
 
@@ -2947,8 +2962,9 @@ const App = () => {
           </button>
           
           {/* 模版详情 (编辑器) */}
-          <button 
+          <button
              onClick={() => {
+               if (!requireAuth()) return; // 需要登录
                setDiscoveryView(false);
                setZoomedImage(null);
                setIsTemplatesDrawerOpen(false);
@@ -2969,8 +2985,9 @@ const App = () => {
           </button>
           
           {/* 设置 */}
-          <button 
+          <button
              onClick={() => {
+               if (!requireAuth()) return; // 需要登录
                setMobileTab('settings');
                setDiscoveryView(false);
                setZoomedImage(null);

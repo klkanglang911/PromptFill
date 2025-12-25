@@ -8,7 +8,7 @@ import { getLocalized } from '../utils/helpers';
 /**
  * DiscoveryView 组件 - 瀑布流展示所有模板
  */
-export const DiscoveryView = React.memo(({ 
+export const DiscoveryView = React.memo(({
   filteredTemplates,
   setActiveTemplateId,
   setDiscoveryView,
@@ -30,7 +30,10 @@ export const DiscoveryView = React.memo(({
   setIsSortMenuOpen,
   sortOrder,
   setSortOrder,
-  setRandomSeed
+  setRandomSeed,
+  // Auth props
+  requireAuth,
+  currentUser
 }) => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -101,8 +104,11 @@ export const DiscoveryView = React.memo(({
               <span className="text-[10px] font-bold text-gray-500">{t('language_name')}</span>
             </button>
 
-            <button 
-              onClick={() => setIsSettingsOpen(true)}
+            <button
+              onClick={() => {
+                if (requireAuth && !requireAuth()) return;
+                setIsSettingsOpen(true);
+              }}
               className="flex flex-col items-center gap-1.5 group"
             >
               <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 group-hover:bg-orange-50 transition-all">
@@ -233,9 +239,12 @@ export const DiscoveryView = React.memo(({
               {/* Left: Tools */}
               <div className="flex items-center gap-3 p-2">
                   {/* Discovery View Toggle (Back to Editor) */}
-                  <button 
-                      onClick={() => setDiscoveryView(false)} 
-                      className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm" 
+                  <button
+                      onClick={() => {
+                        if (requireAuth && !requireAuth()) return;
+                        setDiscoveryView(false);
+                      }}
+                      className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm"
                       title="返回编辑器"
                   >
                       <LayoutGrid size={20} />
@@ -286,9 +295,12 @@ export const DiscoveryView = React.memo(({
                       <span className="text-xs font-bold">{t('language_name')}</span>
                   </button>
 
-                  <button 
-                      onClick={() => setIsSettingsOpen(true)} 
-                      className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm" 
+                  <button
+                      onClick={() => {
+                        if (requireAuth && !requireAuth()) return;
+                        setIsSettingsOpen(true);
+                      }}
+                      className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm"
                       title={t('settings')}
                   >
                       <Settings size={20} />
