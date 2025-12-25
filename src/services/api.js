@@ -46,9 +46,11 @@ export const templateApi = {
     if (options.lang) params.set('lang', options.lang);
     if (options.tags?.length) params.set('tags', options.tags.join(','));
     if (options.all) params.set('all', 'true');
+    // 添加时间戳避免缓存
+    params.set('t', Date.now());
 
     const query = params.toString();
-    return request(`/templates${query ? '?' + query : ''}`);
+    return request(`/templates?${query}`);
   },
 
   /**

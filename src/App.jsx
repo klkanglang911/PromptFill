@@ -1127,10 +1127,22 @@ const App = () => {
     setEditingTemplateNameId(null);
   };
 
-  // 刷新系统模板与词库，保留用户数据
-  const handleRefreshSystemData = React.useCallback(() => {
+  // 刷新系统模板与词库，保留用户数据（从服务器获取最新）
+  const handleRefreshSystemData = React.useCallback(async () => {
     const backupSuffix = t('refreshed_backup_suffix') || '';
-    
+
+    // 先尝试从服务器获取最新模板
+    let serverTemplates = null;
+    try {
+      const response = await templateApi.getAll();
+      if (response.success && response.templates && response.templates.length > 0) {
+        serverTemplates = response.templates;
+        console.log('✅ 刷新：从服务器获取到', serverTemplates.length, '个模板');
+      }
+    } catch (error) {
+      console.warn('⚠️ 刷新：服务器连接失败，使用本地数据:', error.message);
+    }
+
     // 迁移旧格式的 selections：将字符串值转换为对象格式
     const migratedTemplates = templates.map(tpl => {
       const newSelections = {};
@@ -1140,7 +1152,7 @@ const App = () => {
           const bankKey = key.split('-')[0];
           const bank = banks[bankKey];
           if (bank && bank.options) {
-            const matchedOption = bank.options.find(opt => 
+            const matchedOption = bank.options.find(opt =>
               (typeof opt === 'string' && opt === value) ||
               (typeof opt === 'object' && (opt.cn === value || opt.en === value))
             );
@@ -1154,8 +1166,12 @@ const App = () => {
       });
       return { ...tpl, selections: newSelections };
     });
-    
-    const templateResult = mergeTemplatesWithSystem(migratedTemplates, { backupSuffix });
+
+    // 使用服务器模板（如果获取成功）或回退到本地静态模板
+    const templateResult = mergeTemplatesWithSystem(migratedTemplates, {
+      backupSuffix,
+      systemTemplates: serverTemplates  // 传入服务器模板
+    });
     const bankResult = mergeBanksWithSystem(banks, defaults, { backupSuffix });
 
     setTemplates(templateResult.templates);
