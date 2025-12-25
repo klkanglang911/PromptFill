@@ -1,8 +1,8 @@
 import React from 'react';
-import { 
-  LayoutGrid, FileText, Search, RotateCcw, Globe, Settings, 
+import {
+  LayoutGrid, FileText, Search, RotateCcw, Globe, Settings,
   ChevronRight, ChevronDown, ImageIcon, ArrowUpRight, Plus,
-  Pencil, Copy as CopyIcon, Download, Trash2, ArrowUpDown, Home
+  Pencil, Copy as CopyIcon, Download, Trash2, ArrowUpDown, Home, User
 } from 'lucide-react';
 import { PremiumButton } from './PremiumButton';
 import { getLocalized } from '../utils/helpers';
@@ -10,13 +10,13 @@ import { getLocalized } from '../utils/helpers';
 /**
  * TemplatesSidebar 组件 - 负责展示左侧模版列表
  */
-export const TemplatesSidebar = React.memo(({ 
-  mobileTab, 
+export const TemplatesSidebar = React.memo(({
+  mobileTab,
   isTemplatesDrawerOpen,
   setIsTemplatesDrawerOpen,
   setDiscoveryView,
   activeTemplateId,
-  setActiveTemplateId, 
+  setActiveTemplateId,
   filteredTemplates,
   searchQuery,
   setSearchQuery,
@@ -47,7 +47,9 @@ export const TemplatesSidebar = React.memo(({
   tempTemplateAuthor,
   setTempTemplateAuthor,
   saveTemplateName,
-  setEditingTemplateNameId
+  setEditingTemplateNameId,
+  currentUser,
+  onLoginClick
 }) => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -129,6 +131,26 @@ export const TemplatesSidebar = React.memo(({
                   </div>
 
                   <button onClick={() => setLanguage(language === 'cn' ? 'en' : 'cn')} className="text-[10px] px-2 py-1 rounded-full border transition-colors flex items-center gap-1 shadow-sm bg-transparent text-gray-400 border-gray-200 hover:text-orange-600 hover:bg-orange-50"><Globe size={10} />{language.toUpperCase()}</button>
+
+                  {/* 用户按钮 */}
+                  {currentUser ? (
+                    <button
+                      onClick={() => setIsSettingsOpen(true)}
+                      className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-orange-500/30 hover:scale-105 transition-transform"
+                      title={currentUser.nickname || currentUser.email}
+                    >
+                      {currentUser.nickname?.charAt(0) || currentUser.email?.charAt(0) || 'U'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={onLoginClick}
+                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-orange-600 hover:bg-orange-50"
+                      title={language === 'cn' ? '登录' : 'Sign In'}
+                    >
+                      <User size={16} />
+                    </button>
+                  )}
+
                   <button onClick={() => setIsSettingsOpen(true)} className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-orange-600 hover:bg-orange-50" title={t('settings')}><Settings size={16} /></button>
              </div>
          </div>

@@ -17,13 +17,13 @@ import { mergeTemplatesWithSystem, mergeBanksWithSystem } from './utils/merge';
 import { SCENE_WORDS, STYLE_WORDS } from './constants/slogan';
 
 // ====== 导入 API 服务 ======
-import { templateApi, versionApi } from './services/api';
+import { templateApi, versionApi, authApi } from './services/api';
 
 // ====== 导入自定义 Hooks ======
 import { useStickyState } from './hooks/useStickyState';
 
 // ====== 导入 UI 组件 ======
-import { Variable, VisualEditor, PremiumButton, EditorToolbar, Lightbox, TemplatePreview, TemplatesSidebar, BanksSidebar, CategoryManager, InsertVariableModal, AddBankModal, DiscoveryView, MobileSettingsView } from './components';
+import { Variable, VisualEditor, PremiumButton, EditorToolbar, Lightbox, TemplatePreview, TemplatesSidebar, BanksSidebar, CategoryManager, InsertVariableModal, AddBankModal, DiscoveryView, MobileSettingsView, AuthModal } from './components';
 import MobileTabBar from './components/MobileTabBar';
 
 // --- 组件：图片 3D 预览弹窗 (优化性能，状态局部化) ---
@@ -645,6 +645,36 @@ const App = () => {
   }, [isMobileDevice, mobileTab]);
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // 用户认证状态
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // 检查用户登录状态
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await authApi.me();
+        if (response.success && response.user) {
+          setCurrentUser(response.user);
+        }
+      } catch (error) {
+        // 未登录或请求失败，静默处理
+        console.log('用户未登录');
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // 用户登出处理
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      setCurrentUser(null);
+    } catch (error) {
+      console.error('登出失败:', error);
+    }
+  };
   
   // 移动端：首页是否展示完全由 mobileTab 控制，避免 isDiscoveryView 残留导致其它 Tab 白屏
   // 桌面端：保持现有 isDiscoveryView 行为（不影响已正常的桌面端）
@@ -2321,13 +2351,13 @@ const App = () => {
         </div>
       ) : (
         <>
-          <TemplatesSidebar 
+          <TemplatesSidebar
             mobileTab={mobileTab}
             isTemplatesDrawerOpen={isTemplatesDrawerOpen}
             setIsTemplatesDrawerOpen={setIsTemplatesDrawerOpen}
             setDiscoveryView={handleSetDiscoveryView}
             activeTemplateId={activeTemplateId}
-            setActiveTemplateId={setActiveTemplateId} 
+            setActiveTemplateId={setActiveTemplateId}
             filteredTemplates={filteredTemplates}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -2359,6 +2389,8 @@ const App = () => {
             setTempTemplateAuthor={setTempTemplateAuthor}
             saveTemplateName={saveTemplateName}
             setEditingTemplateNameId={setEditingTemplateNameId}
+            currentUser={currentUser}
+            onLoginClick={() => setIsAuthModalOpen(true)}
           />
 
       {/* --- 2. Main Editor (Middle) --- */}
@@ -2476,7 +2508,7 @@ const App = () => {
         <div className={`flex-1 overflow-hidden relative pb-24 md:pb-0 flex flex-col bg-gradient-to-br from-white/60 to-gray-50/60 ${mobileTab === 'settings' ? 'pt-0' : ''}`}>
             {mobileTab === 'settings' ? (
                 <div className="flex-1 flex flex-col overflow-hidden bg-white">
-                    <MobileSettingsView 
+                    <MobileSettingsView
                         language={language}
                         setLanguage={setLanguage}
                         storageMode={storageMode}
@@ -2489,6 +2521,9 @@ const App = () => {
                         handleClearAllData={handleClearAllData}
                         SYSTEM_DATA_VERSION={SYSTEM_DATA_VERSION}
                         t={t}
+                        currentUser={currentUser}
+                        onLoginClick={() => setIsAuthModalOpen(true)}
+                        onLogout={handleLogout}
                     />
                 </div>
             ) : (
@@ -3041,7 +3076,7 @@ const App = () => {
             >
               {t('refresh_now')}
             </button>
-            <button 
+            <button
               onClick={() => setShowAppUpdateNotice(false)}
               className="p-1 hover:bg-white/10 rounded-full transition-colors"
             >
@@ -3050,6 +3085,17 @@ const App = () => {
           </div>
         </div>
       )}
+
+      {/* --- 登录/注册弹窗 --- */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          setIsAuthModalOpen(false);
+        }}
+        t={t}
+      />
 
     </div>
   );

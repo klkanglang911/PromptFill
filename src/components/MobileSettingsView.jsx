@@ -1,17 +1,18 @@
 import React from 'react';
-import { 
-  Settings, Globe, Database, Download, Upload, 
-  RotateCcw, Trash2, Mail, MessageCircle, Github, 
-  ChevronRight, RefreshCw, FileText, Info
+import {
+  Settings, Globe, Database, Download, Upload,
+  RotateCcw, Trash2, Mail, MessageCircle, Github,
+  ChevronRight, RefreshCw, FileText, Info, User, LogOut, Cloud
 } from 'lucide-react';
 
-export const MobileSettingsView = ({ 
-  language, setLanguage, 
+export const MobileSettingsView = ({
+  language, setLanguage,
   storageMode, setStorageMode,
   handleImportTemplate, handleExportAllTemplates,
   handleCompleteBackup, handleImportAllData,
   handleResetSystemData, handleClearAllData,
-  SYSTEM_DATA_VERSION, t 
+  SYSTEM_DATA_VERSION, t,
+  currentUser, onLoginClick, onLogout
 }) => {
   
   // 精简后的更新说明 (Localization supported via content structure if needed, but here we use current lang)
@@ -62,6 +63,51 @@ export const MobileSettingsView = ({
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">{t('settings')}</h1>
         <p className="text-xs text-gray-400 font-medium mt-1 uppercase tracking-widest">{t('template_subtitle')}</p>
       </div>
+
+      {/* 0. 用户账户 */}
+      <SettingSection title={language === 'cn' ? '账户' : 'Account'} icon={User}>
+        {currentUser ? (
+          <>
+            <div className="px-5 py-4 border-b border-gray-100/50">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-orange-500/30">
+                  {currentUser.nickname?.charAt(0) || currentUser.email?.charAt(0) || 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-800 truncate">{currentUser.nickname || currentUser.email?.split('@')[0]}</p>
+                  <p className="text-xs text-gray-400 truncate">{currentUser.email}</p>
+                </div>
+                <div className="flex items-center gap-1 px-2 py-1 bg-green-50 text-green-600 rounded-full">
+                  <Cloud size={12} />
+                  <span className="text-[10px] font-bold">{language === 'cn' ? '已同步' : 'Synced'}</span>
+                </div>
+              </div>
+            </div>
+            <SettingItem
+              icon={LogOut}
+              label={language === 'cn' ? '退出登录' : 'Sign Out'}
+              onClick={onLogout}
+              danger={true}
+            />
+          </>
+        ) : (
+          <button
+            onClick={onLoginClick}
+            className="w-full flex items-center justify-between px-5 py-5 hover:bg-orange-50/50 active:bg-orange-100/50 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-lg shadow-orange-500/30">
+                <User size={20} />
+              </div>
+              <div className="text-left">
+                <span className="text-sm font-bold text-gray-800 block">{language === 'cn' ? '登录 / 注册' : 'Sign In / Sign Up'}</span>
+                <span className="text-[10px] text-gray-400">{language === 'cn' ? '登录后可将模板同步到云端' : 'Sync templates to cloud after login'}</span>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-orange-400" />
+          </button>
+        )}
+      </SettingSection>
 
       {/* 1. 系统设置 */}
       <SettingSection title={t('general_settings')} icon={Settings}>
