@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutGrid, FileText, Search, RotateCcw, Globe, Settings,
   ChevronRight, ChevronDown, ImageIcon, ArrowUpRight, Plus,
-  Pencil, Copy as CopyIcon, Download, Trash2, ArrowUpDown, Home, User
+  Pencil, Copy as CopyIcon, Download, ArrowUpDown, Home, User
 } from 'lucide-react';
 import { PremiumButton } from './PremiumButton';
 import { getLocalized } from '../utils/helpers';
@@ -244,20 +244,14 @@ export const TemplatesSidebar = React.memo(({
                                 >
                                     <CopyIcon size={13} />
                                 </button>
-                                <button 
+                                <button
                                     title={t('export_template')}
                                     onClick={(e) => { e.stopPropagation(); handleExportTemplate(t_item); }}
                                     className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-all duration-200 hover:scale-110"
                                 >
                                     <Download size={13} />
                                 </button>
-                                <button 
-                                    title={t('delete')}
-                                    onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t_item.id, e); }}
-                                    className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-all duration-200 hover:scale-110"
-                                >
-                                    <Trash2 size={13} />
-                                </button>
+                                {/* 删除按钮已移除 - 用户不能删除模板，仅管理员可以 */}
                             </div>
                           )}
                       </div>

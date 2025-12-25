@@ -1,28 +1,28 @@
 import React, { useMemo } from 'react';
 import { Variable } from './Variable';
-import { ImageIcon, ArrowUpRight, Upload, Globe, RotateCcw, Pencil, Check, X, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ImageIcon, ArrowUpRight, Upload, Globe, RotateCcw, Pencil, Check, X, ChevronLeft, ChevronRight, Plus, Send, Clock, Loader2 } from 'lucide-react';
 import { getLocalized } from '../utils/helpers';
 
 /**
  * TemplatePreview 组件 - 负责渲染模版的预览内容，包括变量交互
  */
-export const TemplatePreview = React.memo(({ 
-  activeTemplate, 
-  banks, 
-  defaults, 
-  categories, 
-  activePopover, 
-  setActivePopover, 
-  handleSelect, 
-  handleAddCustomAndSelect, 
-  popoverRef, 
-  t, 
-  displayTag, 
-  TAG_STYLES, 
-  setZoomedImage, 
-  fileInputRef, 
-  setShowImageUrlInput, 
-  handleResetImage, 
+export const TemplatePreview = React.memo(({
+  activeTemplate,
+  banks,
+  defaults,
+  categories,
+  activePopover,
+  setActivePopover,
+  handleSelect,
+  handleAddCustomAndSelect,
+  popoverRef,
+  t,
+  displayTag,
+  TAG_STYLES,
+  setZoomedImage,
+  fileInputRef,
+  setShowImageUrlInput,
+  handleResetImage,
   language,
   setLanguage,
   // 标签编辑相关
@@ -39,7 +39,11 @@ export const TemplatePreview = React.memo(({
   setTempTemplateName,
   saveTemplateName,
   startRenamingTemplate,
-  setEditingTemplateNameId
+  setEditingTemplateNameId,
+  // 提交模板相关
+  handleSubmitTemplate,
+  isSubmitting,
+  currentUser
 }) => {
   const [editImageIndex, setEditImageIndex] = React.useState(0);
 
@@ -355,6 +359,51 @@ export const TemplatePreview = React.memo(({
                         <p className="text-gray-400 text-sm font-medium mt-1">
                             {t('made_by')}
                         </p>
+
+                        {/* 提交模板按钮 - 仅对用户创建的本地模板显示 */}
+                        {activeTemplate.isUserCreated && activeTemplate.isLocal && (
+                            <div className="mt-4">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSubmitTemplate && handleSubmitTemplate(activeTemplate.id);
+                                    }}
+                                    disabled={isSubmitting}
+                                    className={`
+                                        flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300
+                                        ${isSubmitting
+                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-105 active:scale-95'
+                                        }
+                                    `}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            <span>{t('submitting') || '提交中...'}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send size={16} />
+                                            <span>{t('submit_template') || '提交模板'}</span>
+                                        </>
+                                    )}
+                                </button>
+                                <p className="text-xs text-gray-400 mt-2">
+                                    {t('submit_template_tip') || '提交后将由管理员审核，审核通过后所有用户可见'}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* 等待审核状态提示 */}
+                        {activeTemplate.isUserCreated && !activeTemplate.isLocal && activeTemplate.status === 'pending' && (
+                            <div className="mt-4 flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                                <Clock size={16} className="text-amber-500" />
+                                <span className="text-sm font-medium text-amber-700">
+                                    {t('template_pending') || '模板审核中，请耐心等待'}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right: Image (Overhanging) */}

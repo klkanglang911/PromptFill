@@ -1,11 +1,9 @@
 import { Router } from 'express';
 import {
-  getUserTemplates,
-  getUserTemplateById,
-  createUserTemplate,
-  updateUserTemplate,
-  deleteUserTemplate,
-  syncUserTemplates,
+  getTemplatesByUserId,
+  getTemplateById,
+  createTemplate,
+  updateTemplate,
   getUserBanks,
   createOrUpdateUserBank,
   deleteUserBank
@@ -19,10 +17,10 @@ router.use(requireUser);
 
 // ============ 用户模板 ============
 
-// 获取用户所有模板
+// 获取用户所有模板（包括已通过审核的）
 router.get('/templates', (req, res) => {
   try {
-    const templates = getUserTemplates(req.session.user.id);
+    const templates = getTemplatesByUserId(req.session.user.id);
     res.json({
       success: true,
       templates
@@ -36,27 +34,28 @@ router.get('/templates', (req, res) => {
   }
 });
 
-// 创建用户模板
+// 提交新模板（用户创建，默认为待审核状态）
 router.post('/templates', (req, res) => {
   try {
-    const template = createUserTemplate(req.session.user.id, req.body);
+    const template = createTemplate(req.body, req.session.user.id);
     res.json({
       success: true,
-      template
+      template,
+      message: '模板已提交，等待审核'
     });
   } catch (error) {
     console.error('Create user template error:', error);
     res.status(500).json({
       success: false,
-      error: '创建模板失败'
+      error: '提交模板失败'
     });
   }
 });
 
-// 更新用户模板
+// 更新用户模板（仅限自己的模板）
 router.put('/templates/:id', (req, res) => {
   try {
-    const existing = getUserTemplateById(req.session.user.id, req.params.id);
+    const existing = getTemplateById(req.params.id, true);
     if (!existing) {
       return res.status(404).json({
         success: false,
@@ -64,7 +63,15 @@ router.put('/templates/:id', (req, res) => {
       });
     }
 
-    const template = updateUserTemplate(req.session.user.id, req.params.id, req.body);
+    // 验证是自己的模板
+    if (existing.userId !== req.session.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: '无权修改此模板'
+      });
+    }
+
+    const template = updateTemplate(req.params.id, req.body);
     res.json({
       success: true,
       template
@@ -78,54 +85,8 @@ router.put('/templates/:id', (req, res) => {
   }
 });
 
-// 删除用户模板
-router.delete('/templates/:id', (req, res) => {
-  try {
-    const existing = getUserTemplateById(req.session.user.id, req.params.id);
-    if (!existing) {
-      return res.status(404).json({
-        success: false,
-        error: '模板不存在'
-      });
-    }
-
-    deleteUserTemplate(req.session.user.id, req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete user template error:', error);
-    res.status(500).json({
-      success: false,
-      error: '删除模板失败'
-    });
-  }
-});
-
-// 同步本地模板到云端
-router.post('/templates/sync', (req, res) => {
-  try {
-    const { templates } = req.body;
-
-    if (!Array.isArray(templates)) {
-      return res.status(400).json({
-        success: false,
-        error: '无效的模板数据'
-      });
-    }
-
-    const synced = syncUserTemplates(req.session.user.id, templates);
-    res.json({
-      success: true,
-      templates: synced,
-      syncedCount: templates.length
-    });
-  } catch (error) {
-    console.error('Sync user templates error:', error);
-    res.status(500).json({
-      success: false,
-      error: '同步失败'
-    });
-  }
-});
+// 注意：根据业务需求，前端不提供删除模板的能力
+// 此接口保留供管理员或未来扩展使用
 
 // ============ 用户词库 ============
 

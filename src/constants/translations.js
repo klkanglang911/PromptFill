@@ -123,6 +123,13 @@ export const TRANSLATIONS = {
     what_is_new: "更新日志",
     backup_data: "备份数据",
     connect_author: "联系与关于",
+    // 模板提交相关
+    submitting: "提交中...",
+    submit_template: "提交模板",
+    submit_template_tip: "提交后将由管理员审核，审核通过后所有用户可见",
+    template_pending: "模板审核中，请耐心等待",
+    template_submitted: "模板已提交，等待审核",
+    submit_failed: "提交失败，请重试",
   },
   en: {
     template_management: "Templates",
@@ -247,5 +254,12 @@ export const TRANSLATIONS = {
     what_is_new: "What's New",
     backup_data: "Backup Data",
     connect_author: "Connect & About",
+    // Template submission related
+    submitting: "Submitting...",
+    submit_template: "Submit Template",
+    submit_template_tip: "After submission, it will be reviewed. Once approved, it will be visible to all users.",
+    template_pending: "Template under review, please wait",
+    template_submitted: "Template submitted, waiting for review",
+    submit_failed: "Submit failed, please try again",
   },
 };

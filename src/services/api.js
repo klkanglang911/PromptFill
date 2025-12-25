@@ -171,7 +171,7 @@ export const userTemplateApi = {
   },
 
   /**
-   * 创建用户模板
+   * 创建用户模板（提交审核）
    */
   async create(template) {
     return request('/user/templates', {
@@ -181,31 +181,16 @@ export const userTemplateApi = {
   },
 
   /**
-   * 更新用户模板
+   * 更新用户模板（仅限自己的模板）
    */
   async update(id, template) {
     return request(`/user/templates/${id}`, {
       method: 'PUT',
       body: JSON.stringify(template)
     });
-  },
-
-  /**
-   * 删除用户模板
-   */
-  async delete(id) {
-    return request(`/user/templates/${id}`, { method: 'DELETE' });
-  },
-
-  /**
-   * 同步本地模板到云端
-   */
-  async sync(templates) {
-    return request('/user/templates/sync', {
-      method: 'POST',
-      body: JSON.stringify({ templates })
-    });
   }
+  // 注意：根据业务需求，前端不提供删除模板的能力
+  // 删除功能仅管理员后台可用
 };
 
 /**

@@ -6,11 +6,12 @@ import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
+  updateTemplateStatus,
+  getPendingTemplates,
   getAllBanks,
   getAllCategories,
   getVersion,
-  setDataVersion,
-  getAllUserTemplates
+  setDataVersion
 } from '../models/db.js';
 
 const router = Router();
@@ -67,15 +68,17 @@ router.get('/logout', (req, res) => {
 
 // ============ 模板管理 ============
 
-// 模板列表（首页）
+// 模板列表（首页）- 显示所有模板及创建者信息
 router.get('/', requireAuth, (req, res) => {
-  const templates = getAllTemplates(false); // 包括未激活的
+  const templates = getAllTemplates(false, true); // 包括未激活的，包含用户信息
   const version = getVersion();
+  const pendingCount = getPendingTemplates().length;
 
   res.render('admin/templates', {
     title: '模板管理',
     templates,
     version,
+    pendingCount,
     admin: req.session.admin,
     success: req.query.success,
     error: req.query.error
@@ -233,16 +236,51 @@ router.get('/banks', requireAuth, (req, res) => {
   });
 });
 
-// ============ 用户模板管理 ============
+// ============ 用户模板管理（待审核）============
 
-router.get('/user-templates', requireAuth, (req, res) => {
-  const userTemplates = getAllUserTemplates();
+// 待审核模板列表
+router.get('/pending', requireAuth, (req, res) => {
+  const pendingTemplates = getPendingTemplates();
 
-  res.render('admin/user-templates', {
-    title: '用户模板',
-    userTemplates,
-    admin: req.session.admin
+  res.render('admin/pending-templates', {
+    title: '待审核模板',
+    pendingTemplates,
+    admin: req.session.admin,
+    success: req.query.success,
+    error: req.query.error
   });
+});
+
+// 审核通过模板
+router.post('/templates/:id/approve', requireAuth, (req, res) => {
+  try {
+    const template = getTemplateById(req.params.id);
+    if (!template) {
+      return res.redirect('/admin/pending?error=模板不存在');
+    }
+
+    updateTemplateStatus(req.params.id, 'approved');
+    res.redirect('/admin/pending?success=模板已通过审核');
+  } catch (error) {
+    console.error('Approve template error:', error);
+    res.redirect('/admin/pending?error=审核失败');
+  }
+});
+
+// 拒绝模板
+router.post('/templates/:id/reject', requireAuth, (req, res) => {
+  try {
+    const template = getTemplateById(req.params.id);
+    if (!template) {
+      return res.redirect('/admin/pending?error=模板不存在');
+    }
+
+    updateTemplateStatus(req.params.id, 'rejected');
+    res.redirect('/admin/pending?success=模板已拒绝');
+  } catch (error) {
+    console.error('Reject template error:', error);
+    res.redirect('/admin/pending?error=操作失败');
+  }
 });
 
 // ============ 版本管理 ============

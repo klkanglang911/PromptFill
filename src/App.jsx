@@ -696,37 +696,6 @@ const App = () => {
     loadUserTemplates();
   }, [currentUser]);
 
-  // 用户模板变更时自动同步到后端（防抖）
-  useEffect(() => {
-    // 仅在用户登录时执行
-    if (!currentUser) return;
-
-    // 获取当前活跃的用户模板
-    const activeUserTemplate = templates.find(t => t.id === activeTemplateId && t.isUserCreated);
-    if (!activeUserTemplate) return;
-
-    // 清除之前的定时器
-    if (userTemplateSyncTimerRef.current) {
-      clearTimeout(userTemplateSyncTimerRef.current);
-    }
-
-    // 设置新的防抖定时器（2秒后同步）
-    userTemplateSyncTimerRef.current = setTimeout(async () => {
-      try {
-        await userTemplateApi.update(activeUserTemplate.id, activeUserTemplate);
-        console.log('✅ 用户模板已同步:', activeUserTemplate.id);
-      } catch (error) {
-        console.error('⚠️ 模板同步失败:', error.message);
-      }
-    }, 2000);
-
-    return () => {
-      if (userTemplateSyncTimerRef.current) {
-        clearTimeout(userTemplateSyncTimerRef.current);
-      }
-    };
-  }, [currentUser, templates, activeTemplateId]);
-
   // 用户登出处理
   const handleLogout = async () => {
     try {
@@ -824,9 +793,6 @@ const App = () => {
   const [historyPast, setHistoryPast] = useState([]);
   const [historyFuture, setHistoryFuture] = useState([]);
   const historyLastSaveTime = useRef(0);
-
-  // 用户模板同步定时器
-  const userTemplateSyncTimerRef = useRef(null);
 
   const popoverRef = useRef(null);
   const textareaRef = useRef(null);
@@ -1084,7 +1050,11 @@ const App = () => {
 
   // --- Template Actions ---
 
-  const handleAddTemplate = async () => {
+  // 提交状态
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const handleAddTemplate = () => {
     const newId = `tpl_${Date.now()}`;
     const newTemplate = {
       id: newId,
@@ -1093,7 +1063,8 @@ const App = () => {
       content: t('new_template_content'),
       selections: {},
       tags: [],
-      isUserCreated: true // 标记为用户创建的模板
+      isUserCreated: true, // 标记为用户创建的模板
+      isLocal: true // 标记为本地未提交的模板
     };
 
     // 本地更新
@@ -1105,20 +1076,39 @@ const App = () => {
     if (isMobileDevice) {
       setMobileTab('editor');
     }
+  };
 
-    // 如果用户已登录，同步到后端
-    if (currentUser) {
-      try {
-        await userTemplateApi.create(newTemplate);
-        console.log('✅ 模板已同步到云端:', newId);
-      } catch (error) {
-        console.error('⚠️ 模板同步失败:', error.message);
-        // 不影响本地使用，静默失败
+  // 手动提交模板到云端
+  const handleSubmitTemplate = async (templateId) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await userTemplateApi.create(template);
+      if (response.success) {
+        // 更新本地模板状态，标记为已提交
+        setTemplates(prev => prev.map(t =>
+          t.id === templateId ? { ...t, isLocal: false, status: 'pending' } : t
+        ));
+        setSubmitSuccess(true);
+        setTimeout(() => setSubmitSuccess(false), 3000);
+        alert(t('template_submitted') || '模板已提交，等待审核');
       }
+    } catch (error) {
+      console.error('⚠️ 模板提交失败:', error.message);
+      alert(t('submit_failed') || '提交失败，请重试');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDuplicateTemplate = async (t_item, e) => {
+  const handleDuplicateTemplate = (t_item, e) => {
       e.stopPropagation();
       const newId = `tpl_${Date.now()}`;
 
@@ -1138,7 +1128,8 @@ const App = () => {
           name: duplicateName(t_item.name),
           author: t_item.author || "",
           selections: { ...t_item.selections },
-          isUserCreated: true // 标记为用户创建的模板
+          isUserCreated: true, // 标记为用户创建的模板
+          isLocal: true // 标记为本地未提交的模板
       };
 
       // 本地更新
@@ -1149,43 +1140,22 @@ const App = () => {
       if (isMobileDevice) {
         setMobileTab('editor');
       }
-
-      // 如果用户已登录，同步到后端
-      if (currentUser) {
-        try {
-          await userTemplateApi.create(newTemplate);
-          console.log('✅ 复制的模板已同步到云端:', newId);
-        } catch (error) {
-          console.error('⚠️ 模板同步失败:', error.message);
-        }
-      }
   };
 
-  const handleDeleteTemplate = async (id, e) => {
+  // 注意：根据业务需求，前端不提供删除模板的能力
+  // 此函数保留用于管理员或未来扩展
+  const handleDeleteTemplate = (id, e) => {
     e.stopPropagation();
     if (templates.length <= 1) {
       alert(t('alert_keep_one'));
       return;
     }
     if (window.confirm(t('confirm_delete_template'))) {
-      // 检查是否为用户创建的模板
-      const templateToDelete = templates.find(t => t.id === id);
-
       // 本地删除
       const newTemplates = templates.filter(t => t.id !== id);
       setTemplates(newTemplates);
       if (activeTemplateId === id) {
         setActiveTemplateId(newTemplates[0].id);
-      }
-
-      // 如果用户已登录且是用户创建的模板，同步删除到后端
-      if (currentUser && templateToDelete?.isUserCreated) {
-        try {
-          await userTemplateApi.delete(id);
-          console.log('✅ 模板已从云端删除:', id);
-        } catch (error) {
-          console.error('⚠️ 模板删除同步失败:', error.message);
-        }
       }
     }
   };
@@ -2669,7 +2639,7 @@ const App = () => {
                         />
                     </div>
                 ) : (
-                    <TemplatePreview 
+                    <TemplatePreview
                         activeTemplate={activeTemplate}
                         banks={banks}
                         defaults={defaults}
@@ -2703,6 +2673,10 @@ const App = () => {
                         saveTemplateName={saveTemplateName}
                         startRenamingTemplate={startRenamingTemplate}
                         setEditingTemplateNameId={setEditingTemplateNameId}
+                        // 提交模板相关
+                        handleSubmitTemplate={handleSubmitTemplate}
+                        isSubmitting={isSubmitting}
+                        currentUser={currentUser}
                     />
                 )}
               </>
