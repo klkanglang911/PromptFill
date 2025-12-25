@@ -24,6 +24,8 @@ app.set('trust proxy', 1);
 // 中间件
 app.use(helmet({
   contentSecurityPolicy: false, // 允许加载外部资源
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // 允许跨域加载图片
+  crossOriginEmbedderPolicy: false // 禁用 COEP 以允许加载图片
 }));
 app.use(compression());
 app.use(cors({

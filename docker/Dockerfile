@@ -57,8 +57,9 @@ COPY --from=backend-builder /app/server/node_modules ./server/node_modules
 # 复制前端数据文件（供 seed 使用）
 COPY src/data ./src/data
 
-# 创建数据目录和上传目录
-RUN mkdir -p /app/server/data /app/server/uploads
+# 创建数据目录和上传目录，设置权限
+RUN mkdir -p /app/server/data /app/server/uploads && \
+    chmod -R 755 /app/server/uploads
 
 # 复制 nginx 配置
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
