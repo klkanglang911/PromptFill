@@ -2169,9 +2169,9 @@ const App = () => {
       const fullKey = match[1].trim();
       const parsed = parseVariableName(fullKey);
       
-      // 匹配相同 baseKey 且有 groupId 的变量（所有带数字后缀的都联动）
-      // 例如：{{fruit}}_1 和 {{fruit}}_2 会联动，因为它们都有相同的 baseKey 且都有 groupId
-      if (parsed.baseKey === baseKey && parsed.groupId !== null) {
+      // 匹配相同 baseKey 且相同 groupId 的变量
+      // 例如：{{fruit}}_1 和 {{fruit}}_1 会联动，但 {{fruit}}_1 和 {{fruit}}_2 不会
+      if (parsed.baseKey === baseKey && parsed.groupId === groupId) {
         const idx = counters[fullKey] || 0;
         counters[fullKey] = idx + 1;
         linkedKeys.push(`${fullKey}-${idx}`);
