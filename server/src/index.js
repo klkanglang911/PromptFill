@@ -15,6 +15,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 信任代理（Nginx）
+app.set('trust proxy', 1);
+
 // 中间件
 app.use(helmet({
   contentSecurityPolicy: false, // 允许加载外部资源
@@ -33,9 +36,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true', // 仅在明确设置时启用 HTTPS
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24小时
+    maxAge: 24 * 60 * 60 * 1000, // 24小时
+    sameSite: 'lax'
   }
 }));
 
