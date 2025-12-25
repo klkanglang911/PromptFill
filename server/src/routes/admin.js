@@ -9,7 +9,8 @@ import {
   getAllBanks,
   getAllCategories,
   getVersion,
-  setDataVersion
+  setDataVersion,
+  getAllUserTemplates
 } from '../models/db.js';
 
 const router = Router();
@@ -228,6 +229,18 @@ router.get('/banks', requireAuth, (req, res) => {
     title: '词库管理',
     banks,
     categories,
+    admin: req.session.admin
+  });
+});
+
+// ============ 用户模板管理 ============
+
+router.get('/user-templates', requireAuth, (req, res) => {
+  const userTemplates = getAllUserTemplates();
+
+  res.render('admin/user-templates', {
+    title: '用户模板',
+    userTemplates,
     admin: req.session.admin
   });
 });

@@ -386,6 +386,21 @@ export function updateUser(id, updates) {
 
 // ============ 用户模板 CRUD ============
 
+// 获取所有用户的模板（管理员用）
+export function getAllUserTemplates() {
+  const rows = db.prepare(`
+    SELECT ut.*, u.email as user_email, u.nickname as user_nickname
+    FROM user_templates ut
+    LEFT JOIN users u ON ut.user_id = u.id
+    ORDER BY ut.created_at DESC
+  `).all();
+  return rows.map(row => ({
+    ...formatUserTemplateRow(row),
+    userEmail: row.user_email,
+    userNickname: row.user_nickname
+  }));
+}
+
 export function getUserTemplates(userId) {
   const rows = db.prepare('SELECT * FROM user_templates WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC').all(userId);
   return rows.map(formatUserTemplateRow);
