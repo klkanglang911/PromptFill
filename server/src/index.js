@@ -8,6 +8,9 @@ import { fileURLToPath } from 'url';
 
 import apiRoutes from './routes/api.js';
 import adminRoutes from './routes/admin.js';
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/user.js';
+import uploadRoutes from './routes/upload.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,8 +50,21 @@ app.use(session({
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// 静态文件服务（上传的图片）
+const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadDir));
+
 // API 路由
 app.use('/api', apiRoutes);
+
+// 用户认证路由
+app.use('/api/auth', authRoutes);
+
+// 用户数据路由
+app.use('/api/user', userRoutes);
+
+// 图片上传路由
+app.use('/api/upload', uploadRoutes);
 
 // 管理后台路由
 app.use('/admin', adminRoutes);

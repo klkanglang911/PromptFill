@@ -13,6 +13,7 @@ async function request(endpoint, options = {}) {
 
   const config = {
     ...options,
+    credentials: 'include', // 携带 cookie
     headers: {
       'Content-Type': 'application/json',
       ...options.headers
@@ -117,8 +118,148 @@ export const versionApi = {
   }
 };
 
+/**
+ * 用户认证 API
+ */
+export const authApi = {
+  /**
+   * 用户注册
+   */
+  async register(email, password, nickname) {
+    return request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, nickname })
+    });
+  },
+
+  /**
+   * 用户登录
+   */
+  async login(email, password) {
+    return request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+  },
+
+  /**
+   * 用户登出
+   */
+  async logout() {
+    return request('/auth/logout', { method: 'POST' });
+  },
+
+  /**
+   * 获取当前用户信息
+   */
+  async me() {
+    return request('/auth/me');
+  }
+};
+
+/**
+ * 用户模板 API
+ */
+export const userTemplateApi = {
+  /**
+   * 获取用户所有模板
+   */
+  async getAll() {
+    return request('/user/templates');
+  },
+
+  /**
+   * 创建用户模板
+   */
+  async create(template) {
+    return request('/user/templates', {
+      method: 'POST',
+      body: JSON.stringify(template)
+    });
+  },
+
+  /**
+   * 更新用户模板
+   */
+  async update(id, template) {
+    return request(`/user/templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(template)
+    });
+  },
+
+  /**
+   * 删除用户模板
+   */
+  async delete(id) {
+    return request(`/user/templates/${id}`, { method: 'DELETE' });
+  },
+
+  /**
+   * 同步本地模板到云端
+   */
+  async sync(templates) {
+    return request('/user/templates/sync', {
+      method: 'POST',
+      body: JSON.stringify({ templates })
+    });
+  }
+};
+
+/**
+ * 用户词库 API
+ */
+export const userBankApi = {
+  /**
+   * 获取用户所有词库
+   */
+  async getAll() {
+    return request('/user/banks');
+  },
+
+  /**
+   * 同步词库到云端
+   */
+  async sync(banks) {
+    return request('/user/banks/sync', {
+      method: 'POST',
+      body: JSON.stringify({ banks })
+    });
+  }
+};
+
+/**
+ * 图片上传 API
+ */
+export const uploadApi = {
+  /**
+   * 上传单张图片
+   */
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch(`${API_BASE}/upload/image`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: '上传失败' }));
+      throw new Error(error.error || '上传失败');
+    }
+
+    return response.json();
+  }
+};
+
 export default {
   template: templateApi,
   bank: bankApi,
-  version: versionApi
+  version: versionApi,
+  auth: authApi,
+  userTemplate: userTemplateApi,
+  userBank: userBankApi,
+  upload: uploadApi
 };

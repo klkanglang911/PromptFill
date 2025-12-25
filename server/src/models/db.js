@@ -70,10 +70,59 @@ export function initDatabase() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
+    -- 用户表
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      nickname TEXT,
+      avatar_url TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- 用户模板表
+    CREATE TABLE IF NOT EXISTS user_templates (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      name_cn TEXT NOT NULL,
+      name_en TEXT,
+      content_cn TEXT NOT NULL,
+      content_en TEXT,
+      image_url TEXT,
+      image_urls TEXT,
+      author TEXT,
+      selections TEXT,
+      tags TEXT,
+      language TEXT DEFAULT '["cn","en"]',
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    -- 用户词库表
+    CREATE TABLE IF NOT EXISTS user_banks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      key TEXT NOT NULL,
+      label_cn TEXT,
+      label_en TEXT,
+      category TEXT DEFAULT 'other',
+      options TEXT,
+      sort_order INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, key)
+    );
+
     -- 索引
     CREATE INDEX IF NOT EXISTS idx_templates_active ON templates(is_active);
     CREATE INDEX IF NOT EXISTS idx_templates_sort ON templates(sort_order);
     CREATE INDEX IF NOT EXISTS idx_banks_category ON banks(category);
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_user_templates_user ON user_templates(user_id);
+    CREATE INDEX IF NOT EXISTS idx_user_banks_user ON user_banks(user_id);
   `);
 
   // 初始化版本信息
@@ -294,7 +343,205 @@ export function getAdminCount() {
   return row.count;
 }
 
+// ============ 用户 CRUD ============
+
+export function getUserByEmail(email) {
+  return db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+}
+
+export function getUserById(id) {
+  return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+}
+
+export function createUser(email, passwordHash, nickname = null) {
+  const stmt = db.prepare(`
+    INSERT INTO users (email, password_hash, nickname)
+    VALUES (?, ?, ?)
+  `);
+  const result = stmt.run(email, passwordHash, nickname);
+  return getUserById(result.lastInsertRowid);
+}
+
+export function updateUser(id, updates) {
+  const fields = [];
+  const values = [];
+
+  if (updates.nickname !== undefined) {
+    fields.push('nickname = ?');
+    values.push(updates.nickname);
+  }
+  if (updates.avatar_url !== undefined) {
+    fields.push('avatar_url = ?');
+    values.push(updates.avatar_url);
+  }
+
+  if (fields.length === 0) return getUserById(id);
+
+  fields.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(id);
+
+  db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+  return getUserById(id);
+}
+
+// ============ 用户模板 CRUD ============
+
+export function getUserTemplates(userId) {
+  const rows = db.prepare('SELECT * FROM user_templates WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC').all(userId);
+  return rows.map(formatUserTemplateRow);
+}
+
+export function getUserTemplateById(userId, templateId) {
+  const row = db.prepare('SELECT * FROM user_templates WHERE id = ? AND user_id = ?').get(templateId, userId);
+  return row ? formatUserTemplateRow(row) : null;
+}
+
+export function createUserTemplate(userId, template) {
+  const stmt = db.prepare(`
+    INSERT INTO user_templates (id, user_id, name_cn, name_en, content_cn, content_en, image_url, image_urls, author, selections, tags, language, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const id = template.id || `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  stmt.run(
+    id,
+    userId,
+    template.name?.cn || template.name_cn || template.name || '',
+    template.name?.en || template.name_en || '',
+    template.content?.cn || template.content_cn || template.content || '',
+    template.content?.en || template.content_en || '',
+    template.imageUrl || template.image_url || '',
+    JSON.stringify(template.imageUrls || template.image_urls || []),
+    template.author || '',
+    JSON.stringify(template.selections || {}),
+    JSON.stringify(template.tags || []),
+    JSON.stringify(template.language || ['cn', 'en']),
+    template.sort_order || 0
+  );
+
+  return getUserTemplateById(userId, id);
+}
+
+export function updateUserTemplate(userId, templateId, template) {
+  const stmt = db.prepare(`
+    UPDATE user_templates SET
+      name_cn = ?, name_en = ?, content_cn = ?, content_en = ?,
+      image_url = ?, image_urls = ?, author = ?, selections = ?,
+      tags = ?, language = ?, sort_order = ?,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND user_id = ?
+  `);
+
+  stmt.run(
+    template.name?.cn || template.name_cn || template.name || '',
+    template.name?.en || template.name_en || '',
+    template.content?.cn || template.content_cn || template.content || '',
+    template.content?.en || template.content_en || '',
+    template.imageUrl || template.image_url || '',
+    JSON.stringify(template.imageUrls || template.image_urls || []),
+    template.author || '',
+    JSON.stringify(template.selections || {}),
+    JSON.stringify(template.tags || []),
+    JSON.stringify(template.language || ['cn', 'en']),
+    template.sort_order || 0,
+    templateId,
+    userId
+  );
+
+  return getUserTemplateById(userId, templateId);
+}
+
+export function deleteUserTemplate(userId, templateId) {
+  db.prepare('DELETE FROM user_templates WHERE id = ? AND user_id = ?').run(templateId, userId);
+}
+
+export function syncUserTemplates(userId, templates) {
+  const insertOrUpdate = db.transaction((templates) => {
+    for (const template of templates) {
+      const existing = getUserTemplateById(userId, template.id);
+      if (existing) {
+        updateUserTemplate(userId, template.id, template);
+      } else {
+        createUserTemplate(userId, template);
+      }
+    }
+  });
+
+  insertOrUpdate(templates);
+  return getUserTemplates(userId);
+}
+
+// ============ 用户词库 CRUD ============
+
+export function getUserBanks(userId) {
+  const rows = db.prepare('SELECT * FROM user_banks WHERE user_id = ? ORDER BY sort_order ASC').all(userId);
+  return rows.reduce((acc, row) => {
+    acc[row.key] = {
+      label: { cn: row.label_cn, en: row.label_en },
+      category: row.category,
+      options: JSON.parse(row.options || '[]')
+    };
+    return acc;
+  }, {});
+}
+
+export function createOrUpdateUserBank(userId, key, bank) {
+  const existing = db.prepare('SELECT * FROM user_banks WHERE user_id = ? AND key = ?').get(userId, key);
+
+  if (existing) {
+    db.prepare(`
+      UPDATE user_banks SET
+        label_cn = ?, label_en = ?, category = ?, options = ?, sort_order = ?
+      WHERE user_id = ? AND key = ?
+    `).run(
+      bank.label?.cn || '',
+      bank.label?.en || '',
+      bank.category || 'other',
+      JSON.stringify(bank.options || []),
+      bank.sort_order || 0,
+      userId,
+      key
+    );
+  } else {
+    db.prepare(`
+      INSERT INTO user_banks (user_id, key, label_cn, label_en, category, options, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      userId,
+      key,
+      bank.label?.cn || '',
+      bank.label?.en || '',
+      bank.category || 'other',
+      JSON.stringify(bank.options || []),
+      bank.sort_order || 0
+    );
+  }
+}
+
+export function deleteUserBank(userId, key) {
+  db.prepare('DELETE FROM user_banks WHERE user_id = ? AND key = ?').run(userId, key);
+}
+
 // ============ 辅助函数 ============
+
+function formatUserTemplateRow(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: { cn: row.name_cn, en: row.name_en },
+    content: { cn: row.content_cn, en: row.content_en },
+    imageUrl: row.image_url,
+    imageUrls: JSON.parse(row.image_urls || '[]'),
+    author: row.author,
+    selections: JSON.parse(row.selections || '{}'),
+    tags: JSON.parse(row.tags || '[]'),
+    language: JSON.parse(row.language || '["cn","en"]'),
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
 
 function formatTemplateRow(row) {
   return {

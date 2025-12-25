@@ -47,3 +47,26 @@ export function skipIfAuth(req, res, next) {
   }
   next();
 }
+
+/**
+ * 要求用户登录的中间件
+ */
+export function requireUser(req, res, next) {
+  if (req.session && req.session.user) {
+    return next();
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: '需要登录'
+  });
+}
+
+/**
+ * 可选用户登录（用于同时支持登录和匿名用户的接口）
+ */
+export function optionalUser(req, res, next) {
+  // 不做任何检查，直接继续
+  // 用户信息可以从 req.session.user 获取
+  next();
+}

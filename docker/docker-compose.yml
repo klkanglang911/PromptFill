@@ -11,6 +11,8 @@ services:
     volumes:
       # 持久化数据库
       - promptfill_data:/app/server/data
+      # 持久化上传文件
+      - promptfill_uploads:/app/server/uploads
     environment:
       - NODE_ENV=production
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
@@ -27,4 +29,6 @@ services:
 
 volumes:
   promptfill_data:
+    driver: local
+  promptfill_uploads:
     driver: local
