@@ -572,9 +572,7 @@ const App = () => {
   
   const [templates, setTemplates] = useStickyState(INITIAL_TEMPLATES_CONFIG, "app_templates_v10");
   const [activeTemplateId, setActiveTemplateId] = useStickyState("tpl_default", "app_active_template_id_v4");
-  
-  const [lastAppliedDataVersion, setLastAppliedDataVersion] = useStickyState("", "app_data_version_v1");
-  const [showDataUpdateNotice, setShowDataUpdateNotice] = useState(false);
+
   const [showAppUpdateNotice, setShowAppUpdateNotice] = useState(false);
 
   // 远程模板加载状态
@@ -684,24 +682,8 @@ const App = () => {
   const [sortOrder, setSortOrder] = useState("newest"); // newest, oldest, a-z, z-a, random
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [randomSeed, setRandomSeed] = useState(Date.now()); // 用于随机排序的种子
-  
-  // 检查系统模版更新
-  // 检测数据版本更新 (模板与词库)
-  useEffect(() => {
-    if (SYSTEM_DATA_VERSION && lastAppliedDataVersion !== SYSTEM_DATA_VERSION) {
-      // 检查是否有存储的数据。如果是第一次使用（无数据），直接静默更新版本号
-      const hasTemplates = localStorage.getItem("app_templates_v10");
-      const hasBanks = localStorage.getItem("app_banks_v9");
-      
-      if (hasTemplates || hasBanks) {
-        setShowDataUpdateNotice(true);
-      } else {
-        setLastAppliedDataVersion(SYSTEM_DATA_VERSION);
-      }
-    }
-  }, [lastAppliedDataVersion]);
 
-  // 检查应用代码版本更新与数据版本更新
+  // 检查应用代码版本更新
   useEffect(() => {
     const checkUpdates = async () => {
       try {
@@ -724,10 +706,6 @@ const App = () => {
             setShowAppUpdateNotice(true);
           }
 
-          // 检查数据版本更新（模板和词库）
-          if (data.dataVersion && data.dataVersion !== lastAppliedDataVersion) {
-            setShowDataUpdateNotice(true);
-          }
         }
       } catch (e) {
         // 静默失败
@@ -738,7 +716,7 @@ const App = () => {
     const timer = setInterval(checkUpdates, 5 * 60 * 1000); // 5分钟检查一次
 
     return () => clearInterval(timer);
-  }, [lastAppliedDataVersion]); // 移除 lastAppliedAppVersion 依赖
+  }, []); // 仅在挂载时执行一次
 
   // 从服务器加载远程模板
   useEffect(() => {
@@ -1186,12 +1164,6 @@ const App = () => {
       alert(t('refresh_done_no_conflict'));
     }
   }, [banks, defaults, templates, t]);
-
-  const handleAutoUpdate = () => {
-    handleRefreshSystemData();
-    setLastAppliedDataVersion(SYSTEM_DATA_VERSION);
-    setShowDataUpdateNotice(false);
-  };
 
   // Template Tags Management
   const handleUpdateTemplateTags = (templateId, newTags) => {
@@ -3037,40 +3009,6 @@ const App = () => {
         }}
         t={t}
       />
-
-      {/* --- 数据更新提示 (模板和词库) --- */}
-      {showDataUpdateNotice && (
-        <div className="fixed inset-0 z-[200] bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transition-all">
-            <div className="flex items-center gap-3 mb-4 text-orange-600">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <RefreshCw size={24} />
-              </div>
-              <h3 className="text-xl font-bold">{t('update_available_title')}</h3>
-            </div>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              {t('update_available_msg')}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setLastAppliedDataVersion(SYSTEM_DATA_VERSION);
-                  setShowDataUpdateNotice(false);
-                }}
-                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-              >
-                {t('later')}
-              </button>
-              <button
-                onClick={handleAutoUpdate}
-                className="flex-1 px-4 py-2.5 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20 font-bold"
-              >
-                {t('update_now')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* --- 应用刷新提示 (应用版本更新) --- */}
       {showAppUpdateNotice && (
