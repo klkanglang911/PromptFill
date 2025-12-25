@@ -1,0 +1,42 @@
+# Docker 忽略文件
+
+# 依赖目录
+node_modules
+server/node_modules
+
+# 构建产物
+dist
+server/data
+
+# 开发文件
+*.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Tauri
+src-tauri
+
+# 测试
+coverage
+*.test.js
+*.spec.js
+
+# 文档（可选保留）
+*.md
+!README.md
+
+# 其他
+.DS_Store
+Thumbs.db

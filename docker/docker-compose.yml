@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  promptfill:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: promptfill
+    ports:
+      - "${PORT:-8080}:80"
+    volumes:
+      # 持久化数据库
+      - promptfill_data:/app/server/data
+    environment:
+      - NODE_ENV=production
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - SESSION_SECRET=${SESSION_SECRET:-promptfill-secret-change-me}
+      - API_KEY=${API_KEY:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  promptfill_data:
+    driver: local

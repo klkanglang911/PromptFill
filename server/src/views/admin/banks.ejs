@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - PromptFill 管理后台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- 顶部导航 -->
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center gap-4">
+          <a href="/admin" class="text-gray-600 hover:text-gray-800">← 返回模板管理</a>
+          <h1 class="text-xl font-bold text-gray-800"><%= title %></h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-gray-600">欢迎，<%= admin.username %></span>
+          <a href="/admin/logout" class="text-red-600 hover:text-red-700">退出</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">词库管理</h2>
+      <p class="text-gray-500 mt-1">共 <%= Object.keys(banks).length %> 个词库</p>
+    </div>
+
+    <!-- 分类统计 -->
+    <div class="grid grid-cols-6 gap-4 mb-8">
+      <% categories.forEach(function(cat) { %>
+        <div class="bg-white rounded-xl p-4 shadow-sm">
+          <div class="text-sm text-gray-500"><%= cat.name_cn %></div>
+          <div class="text-2xl font-bold text-gray-800">
+            <%= Object.values(banks).filter(b => b.category === cat.id).length %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- 词库列表 -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">键名</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标签</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分类</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">选项数量</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% Object.entries(banks).forEach(function([key, bank]) { %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <code class="text-sm bg-gray-100 px-2 py-1 rounded"><%= key %></code>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900"><%= bank.label.cn %></div>
+                <div class="text-sm text-gray-500"><%= bank.label.en %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                  <%= bank.category %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <%= bank.options.length %> 个选项
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+      <p class="text-yellow-700 text-sm">
+        <strong>提示：</strong>词库的完整编辑功能正在开发中。目前可以通过直接编辑数据库或运行 seed 脚本来更新词库。
+      </p>
+    </div>
+  </div>
+</body>
+</html>

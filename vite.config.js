@@ -11,6 +11,17 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     host: true, // 保持原本的 --host 功能
+    // 开发环境代理 API 请求到后端服务器
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/admin': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
   },
   // 设置环境变量的前缀，这样在 Tauri 中可以访问它们
   envPrefix: ['VITE_', 'TAURI_'],

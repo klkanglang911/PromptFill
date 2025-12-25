@@ -16,6 +16,9 @@ import { deepClone, makeUniqueKey, waitForImageLoad, getLocalized } from './util
 import { mergeTemplatesWithSystem, mergeBanksWithSystem } from './utils/merge';
 import { SCENE_WORDS, STYLE_WORDS } from './constants/slogan';
 
+// ====== 导入 API 服务 ======
+import { templateApi, versionApi } from './services/api';
+
 // ====== 导入自定义 Hooks ======
 import { useStickyState } from './hooks/useStickyState';
 
@@ -573,6 +576,10 @@ const App = () => {
   const [lastAppliedDataVersion, setLastAppliedDataVersion] = useStickyState("", "app_data_version_v1");
   const [showDataUpdateNotice, setShowDataUpdateNotice] = useState(false);
   const [showAppUpdateNotice, setShowAppUpdateNotice] = useState(false);
+
+  // 远程模板加载状态
+  const [isLoadingRemote, setIsLoadingRemote] = useState(true);
+  const [remoteLoadError, setRemoteLoadError] = useState(null);
   
   // UI State
   const [bankSidebarWidth, setBankSidebarWidth] = useStickyState(420, "app_bank_sidebar_width_v1"); // Default width increased to 420px for 2-column layout
@@ -668,15 +675,25 @@ const App = () => {
   useEffect(() => {
     const checkUpdates = async () => {
       try {
-        const response = await fetch('/version.json?t=' + Date.now());
-        if (response.ok) {
-          const data = await response.json();
-          
+        // 优先尝试从 API 获取版本信息
+        let data;
+        try {
+          const apiResponse = await versionApi.get();
+          data = apiResponse;
+        } catch {
+          // API 不可用时，回退到本地 version.json
+          const response = await fetch('/version.json?t=' + Date.now());
+          if (response.ok) {
+            data = await response.json();
+          }
+        }
+
+        if (data) {
           // 检查应用版本更新 - 使用代码内常量 APP_VERSION 进行比对
           if (data.appVersion && data.appVersion !== APP_VERSION) {
             setShowAppUpdateNotice(true);
           }
-          
+
           // 检查数据版本更新（模板和词库）
           if (data.dataVersion && data.dataVersion !== lastAppliedDataVersion) {
             setShowDataUpdateNotice(true);
@@ -686,12 +703,41 @@ const App = () => {
         // 静默失败
       }
     };
-    
+
     checkUpdates();
     const timer = setInterval(checkUpdates, 5 * 60 * 1000); // 5分钟检查一次
-    
+
     return () => clearInterval(timer);
   }, [lastAppliedDataVersion]); // 移除 lastAppliedAppVersion 依赖
+
+  // 从服务器加载远程模板
+  useEffect(() => {
+    const loadRemoteTemplates = async () => {
+      try {
+        setIsLoadingRemote(true);
+        setRemoteLoadError(null);
+
+        const response = await templateApi.getAll();
+        if (response.success && response.templates && response.templates.length > 0) {
+          // 使用远程模板作为系统模板，与本地用户数据合并
+          const { templates: merged } = mergeTemplatesWithSystem(templates, {
+            systemTemplates: response.templates,
+            backupSuffix: " (已备份)"
+          });
+          setTemplates(merged);
+          console.log('✅ 远程模板加载成功，共', response.templates.length, '个');
+        }
+      } catch (error) {
+        console.warn('⚠️ 远程模板加载失败，使用本地缓存:', error.message);
+        setRemoteLoadError(error.message);
+        // 离线模式：继续使用本地 localStorage 缓存的模板
+      } finally {
+        setIsLoadingRemote(false);
+      }
+    };
+
+    loadRemoteTemplates();
+  }, []); // 仅在首次加载时执行
 
   // History State for Undo/Redo
   const [historyPast, setHistoryPast] = useState([]);

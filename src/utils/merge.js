@@ -4,9 +4,12 @@ import { INITIAL_BANKS, INITIAL_DEFAULTS } from '../data/banks';
 import { deepClone, makeUniqueKey } from './helpers';
 
 // 合并系统模板，系统模板强制更新，用户改动备份
-export const mergeTemplatesWithSystem = (currentTemplates, { backupSuffix }) => {
-  const systemMap = new Map(INITIAL_TEMPLATES_CONFIG.map(t => [t.id, deepClone(t)]));
-  const merged = INITIAL_TEMPLATES_CONFIG.map(t => deepClone(t));
+// 支持传入远程系统模板（systemTemplates），如果未提供则使用本地的 INITIAL_TEMPLATES_CONFIG
+export const mergeTemplatesWithSystem = (currentTemplates, { backupSuffix, systemTemplates } = {}) => {
+  // 使用传入的远程模板或回退到本地内置模板
+  const baseTemplates = systemTemplates || INITIAL_TEMPLATES_CONFIG;
+  const systemMap = new Map(baseTemplates.map(t => [t.id, deepClone(t)]));
+  const merged = baseTemplates.map(t => deepClone(t));
   const notes = [];
   const existingIds = new Set(merged.map(t => t.id));
 
