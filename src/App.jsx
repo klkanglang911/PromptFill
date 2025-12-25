@@ -17,7 +17,7 @@ import { mergeTemplatesWithSystem, mergeBanksWithSystem } from './utils/merge';
 import { SCENE_WORDS, STYLE_WORDS } from './constants/slogan';
 
 // ====== 导入 API 服务 ======
-import { templateApi, versionApi, authApi } from './services/api';
+import { templateApi, versionApi, authApi, userTemplateApi } from './services/api';
 
 // ====== 导入自定义 Hooks ======
 import { useStickyState } from './hooks/useStickyState';
@@ -666,6 +666,67 @@ const App = () => {
     checkAuth();
   }, []);
 
+  // 登录成功后加载用户模板
+  useEffect(() => {
+    const loadUserTemplates = async () => {
+      if (!currentUser) return;
+
+      try {
+        const response = await userTemplateApi.getAll();
+        if (response.success && response.templates && response.templates.length > 0) {
+          // 将用户模板合并到本地模板列表中
+          const userTemplates = response.templates.map(t => ({
+            ...t,
+            isUserCreated: true // 标记为用户创建的模板
+          }));
+
+          setTemplates(prev => {
+            // 过滤掉本地已有的用户模板（避免重复）
+            const systemTemplates = prev.filter(t => !t.isUserCreated);
+            // 合并系统模板和用户模板
+            return [...systemTemplates, ...userTemplates];
+          });
+          console.log('✅ 用户模板加载成功，共', userTemplates.length, '个');
+        }
+      } catch (error) {
+        console.warn('⚠️ 用户模板加载失败:', error.message);
+      }
+    };
+
+    loadUserTemplates();
+  }, [currentUser]);
+
+  // 用户模板变更时自动同步到后端（防抖）
+  useEffect(() => {
+    // 仅在用户登录时执行
+    if (!currentUser) return;
+
+    // 获取当前活跃的用户模板
+    const activeUserTemplate = templates.find(t => t.id === activeTemplateId && t.isUserCreated);
+    if (!activeUserTemplate) return;
+
+    // 清除之前的定时器
+    if (userTemplateSyncTimerRef.current) {
+      clearTimeout(userTemplateSyncTimerRef.current);
+    }
+
+    // 设置新的防抖定时器（2秒后同步）
+    userTemplateSyncTimerRef.current = setTimeout(async () => {
+      try {
+        await userTemplateApi.update(activeUserTemplate.id, activeUserTemplate);
+        console.log('✅ 用户模板已同步:', activeUserTemplate.id);
+      } catch (error) {
+        console.error('⚠️ 模板同步失败:', error.message);
+      }
+    }, 2000);
+
+    return () => {
+      if (userTemplateSyncTimerRef.current) {
+        clearTimeout(userTemplateSyncTimerRef.current);
+      }
+    };
+  }, [currentUser, templates, activeTemplateId]);
+
   // 用户登出处理
   const handleLogout = async () => {
     try {
@@ -763,6 +824,9 @@ const App = () => {
   const [historyPast, setHistoryPast] = useState([]);
   const [historyFuture, setHistoryFuture] = useState([]);
   const historyLastSaveTime = useRef(0);
+
+  // 用户模板同步定时器
+  const userTemplateSyncTimerRef = useRef(null);
 
   const popoverRef = useRef(null);
   const textareaRef = useRef(null);
@@ -1020,7 +1084,7 @@ const App = () => {
 
   // --- Template Actions ---
 
-  const handleAddTemplate = () => {
+  const handleAddTemplate = async () => {
     const newId = `tpl_${Date.now()}`;
     const newTemplate = {
       id: newId,
@@ -1028,21 +1092,36 @@ const App = () => {
       author: "",
       content: t('new_template_content'),
       selections: {},
-      tags: []
+      tags: [],
+      isUserCreated: true // 标记为用户创建的模板
     };
+
+    // 本地更新
     setTemplates([...templates, newTemplate]);
     setActiveTemplateId(newId);
     setIsEditing(true);
+
     // 在移动端自动切换到编辑Tab
     if (isMobileDevice) {
       setMobileTab('editor');
     }
+
+    // 如果用户已登录，同步到后端
+    if (currentUser) {
+      try {
+        await userTemplateApi.create(newTemplate);
+        console.log('✅ 模板已同步到云端:', newId);
+      } catch (error) {
+        console.error('⚠️ 模板同步失败:', error.message);
+        // 不影响本地使用，静默失败
+      }
+    }
   };
 
-  const handleDuplicateTemplate = (t_item, e) => {
+  const handleDuplicateTemplate = async (t_item, e) => {
       e.stopPropagation();
       const newId = `tpl_${Date.now()}`;
-      
+
       const duplicateName = (name) => {
         if (typeof name === 'string') return `${name}${t('copy_suffix')}`;
         const newName = { ...name };
@@ -1058,27 +1137,55 @@ const App = () => {
           id: newId,
           name: duplicateName(t_item.name),
           author: t_item.author || "",
-          selections: { ...t_item.selections }
+          selections: { ...t_item.selections },
+          isUserCreated: true // 标记为用户创建的模板
       };
+
+      // 本地更新
       setTemplates([...templates, newTemplate]);
       setActiveTemplateId(newId);
+
       // 在移动端自动切换到编辑Tab
       if (isMobileDevice) {
         setMobileTab('editor');
       }
+
+      // 如果用户已登录，同步到后端
+      if (currentUser) {
+        try {
+          await userTemplateApi.create(newTemplate);
+          console.log('✅ 复制的模板已同步到云端:', newId);
+        } catch (error) {
+          console.error('⚠️ 模板同步失败:', error.message);
+        }
+      }
   };
 
-  const handleDeleteTemplate = (id, e) => {
+  const handleDeleteTemplate = async (id, e) => {
     e.stopPropagation();
     if (templates.length <= 1) {
       alert(t('alert_keep_one'));
       return;
     }
     if (window.confirm(t('confirm_delete_template'))) {
+      // 检查是否为用户创建的模板
+      const templateToDelete = templates.find(t => t.id === id);
+
+      // 本地删除
       const newTemplates = templates.filter(t => t.id !== id);
       setTemplates(newTemplates);
       if (activeTemplateId === id) {
         setActiveTemplateId(newTemplates[0].id);
+      }
+
+      // 如果用户已登录且是用户创建的模板，同步删除到后端
+      if (currentUser && templateToDelete?.isUserCreated) {
+        try {
+          await userTemplateApi.delete(id);
+          console.log('✅ 模板已从云端删除:', id);
+        } catch (error) {
+          console.error('⚠️ 模板删除同步失败:', error.message);
+        }
       }
     }
   };
