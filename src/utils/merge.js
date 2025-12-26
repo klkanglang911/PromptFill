@@ -85,6 +85,18 @@ export const mergeTemplatesWithSystem = (currentTemplates, { backupSuffix, syste
       // 如果系统模板没有变化，保留这个旧备份
     }
 
+    // 【关键修复】检查用户模板是否应该被删除
+    // 如果模板已提交到服务器（非本地模板），且服务器列表中不存在，则说明已被管理员删除
+    if (t.isUserCreated && !t.isLocal && systemTemplates) {
+      // 检查服务器返回的模板中是否包含此模板
+      const existsOnServer = systemTemplates.some(st => st.id === t.id);
+      if (!existsOnServer) {
+        // 服务器已删除此模板，跳过不添加到合并结果
+        notes.push(`模板 "${t.name?.cn || t.name || t.id}" 已被管理员删除`);
+        return;
+      }
+    }
+
     let newId = t.id;
     if (existingIds.has(newId)) {
       // ID 冲突，生成新ID
