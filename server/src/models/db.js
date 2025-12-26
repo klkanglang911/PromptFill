@@ -13,11 +13,11 @@ db.pragma('journal_mode = WAL');
 
 // 初始化数据库表
 export function initDatabase() {
+  // 先创建基本表结构（不包含可能导致问题的索引）
   db.exec(`
     -- 模板表（合并系统模板和用户模板）
     CREATE TABLE IF NOT EXISTS templates (
       id TEXT PRIMARY KEY,
-      user_id INTEGER,
       name_cn TEXT NOT NULL,
       name_en TEXT,
       content_cn TEXT NOT NULL,
@@ -30,14 +30,9 @@ export function initDatabase() {
       language TEXT DEFAULT '["cn","en"]',
       sort_order INTEGER DEFAULT 0,
       is_active INTEGER DEFAULT 1,
-      status TEXT DEFAULT 'approved',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
-    -- user_id = NULL 表示系统模板
-    -- user_id = 123 表示用户 123 创建的模板
-    -- status: draft(草稿), pending(待审核), approved(已通过), rejected(已拒绝)
 
     -- 词库表
     CREATE TABLE IF NOT EXISTS banks (
@@ -102,17 +97,15 @@ export function initDatabase() {
       UNIQUE(user_id, key)
     );
 
-    -- 索引
+    -- 基础索引（不依赖新字段）
     CREATE INDEX IF NOT EXISTS idx_templates_active ON templates(is_active);
     CREATE INDEX IF NOT EXISTS idx_templates_sort ON templates(sort_order);
-    CREATE INDEX IF NOT EXISTS idx_templates_user ON templates(user_id);
-    CREATE INDEX IF NOT EXISTS idx_templates_status ON templates(status);
     CREATE INDEX IF NOT EXISTS idx_banks_category ON banks(category);
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_user_banks_user ON user_banks(user_id);
   `);
 
-  // 迁移：检查 templates 表是否有 user_id 字段，没有则添加
+  // 迁移：检查 templates 表是否有 user_id 和 status 字段，没有则添加
   try {
     const columns = db.prepare("PRAGMA table_info(templates)").all();
     const hasUserId = columns.some(col => col.name === 'user_id');
@@ -126,6 +119,18 @@ export function initDatabase() {
     if (!hasStatus) {
       console.log('🔄 迁移：为 templates 表添加 status 字段...');
       db.exec("ALTER TABLE templates ADD COLUMN status TEXT DEFAULT 'approved'");
+    }
+
+    // 创建依赖新字段的索引（如果字段存在）
+    if (hasUserId || !hasUserId) { // 无论如何都尝试，因为上面可能刚添加
+      try {
+        db.exec('CREATE INDEX IF NOT EXISTS idx_templates_user ON templates(user_id)');
+      } catch (e) { /* 忽略 */ }
+    }
+    if (hasStatus || !hasStatus) {
+      try {
+        db.exec('CREATE INDEX IF NOT EXISTS idx_templates_status ON templates(status)');
+      } catch (e) { /* 忽略 */ }
     }
 
     // 迁移 user_templates 数据到 templates
