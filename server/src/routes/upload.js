@@ -20,7 +20,7 @@ if (!fs.existsSync(uploadDir)) {
 
 // 允许的文件类型
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB (前端已压缩到500KB以下，留余量)
 
 // 配置 multer
 const storage = multer.diskStorage({

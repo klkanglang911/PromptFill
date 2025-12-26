@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Copy, Plus, X, Settings, Check, Edit3, Eye, Trash2, FileText, Pencil, Copy as CopyIcon, Globe, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, GripVertical, Download, Upload, Image as ImageIcon, List, Undo, Redo, Maximize2, RotateCcw, LayoutGrid, Sidebar, Search, ArrowRight, User, ArrowUpRight, ArrowUpDown, RefreshCw, Sparkles } from 'lucide-react';
+import { Copy, Plus, X, Settings, Check, Edit3, Eye, Trash2, FileText, Pencil, Copy as CopyIcon, Globe, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, GripVertical, Download, Upload, Image as ImageIcon, List, Undo, Redo, Maximize2, RotateCcw, LayoutGrid, Sidebar, Search, ArrowRight, User, ArrowUpRight, ArrowUpDown, RefreshCw, Sparkles, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 // ====== 导入数据配置 ======
@@ -14,6 +14,7 @@ import { MASONRY_STYLES } from './constants/masonryStyles';
 // ====== 导入工具函数 ======
 import { deepClone, makeUniqueKey, waitForImageLoad, getLocalized } from './utils/helpers';
 import { mergeTemplatesWithSystem, mergeBanksWithSystem } from './utils/merge';
+import { uploadImageWithCompression, validateImageFile } from './utils/imageCompressor';
 import { SCENE_WORDS, STYLE_WORDS } from './constants/slogan';
 
 // ====== 导入 API 服务 ======
@@ -620,6 +621,8 @@ const App = () => {
   const [currentImageEditIndex, setCurrentImageEditIndex] = useState(0);
   const [showImageUrlInput, setShowImageUrlInput] = useState(false);
   const [showImageActionMenu, setShowImageActionMenu] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false); // 图片上传中状态
+  const [uploadProgress, setUploadProgress] = useState({ stage: '', progress: 0 }); // 上传进度
   
   // File System Access API State
   const [storageMode, setStorageMode] = useState(() => {
@@ -1317,73 +1320,66 @@ const App = () => {
   }, [templates, searchQuery, selectedTags, sortOrder, randomSeed, language]);
 
   const fileInputRef = useRef(null);
-  
-  const handleUploadImage = (e) => {
+
+  const handleUploadImage = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // 重置input，允许重复选择同一文件
+      if (e.target) {
+          e.target.value = '';
+      }
+
+      // 验证文件
+      const validation = validateImageFile(file, { maxSizeMB: 20 });
+      if (!validation.valid) {
+          alert(validation.error);
+          return;
+      }
+
+      setIsUploadingImage(true);
+      setUploadProgress({ stage: 'compressing', progress: 0 });
+
       try {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          
-          // 验证文件类型
-          if (!file.type.startsWith('image/')) {
-              if (storageMode === 'browser') {
-                  alert('请选择图片文件');
-              }
-              return;
+          // 压缩并上传到服务器
+          const result = await uploadImageWithCompression(file, {
+              maxSizeKB: 500,
+              onProgress: setUploadProgress
+          });
+
+          if (!result.success) {
+              throw new Error(result.error);
           }
-          
-          // 移除文件大小限制，让用户自由上传
-          // 如果超出localStorage限制，会在useStickyState中捕获并提示
-          
-          const reader = new FileReader();
-          
-          reader.onloadend = () => {
-              try {
-                  setTemplates(prev => prev.map(t => {
-                      if (t.id !== activeTemplateId) return t;
-                      
-                      if (imageUpdateMode === 'add') {
-                        const newUrls = [...(t.imageUrls || [t.imageUrl]), reader.result];
-                        return { ...t, imageUrls: newUrls, imageUrl: newUrls[0] };
-                      } else {
-                        // Replace current index
-                        if (t.imageUrls && Array.isArray(t.imageUrls)) {
-                          const newUrls = [...t.imageUrls];
-                          newUrls[currentImageEditIndex] = reader.result;
-                          return { ...t, imageUrls: newUrls, imageUrl: newUrls[0] };
-                        }
-                        return { ...t, imageUrl: reader.result };
-                      }
-                  }));
-              } catch (error) {
-                  console.error('图片上传失败:', error);
-                  if (storageMode === 'browser' && error.name === 'QuotaExceededError') {
-                      alert('存储空间不足！图片过大。\n建议：\n1. 使用图片链接（URL）方式\n2. 压缩图片（tinypng.com）\n3. 导出备份后清空数据');
-                  } else {
-                      if (storageMode === 'browser') {
-                          alert('图片上传失败，请重试');
-                      }
+
+          // 更新模板图片 URL
+          const imageUrl = result.url;
+          setTemplates(prev => prev.map(t => {
+              if (t.id !== activeTemplateId) return t;
+
+              if (imageUpdateMode === 'add') {
+                  const newUrls = [...(t.imageUrls || [t.imageUrl].filter(Boolean)), imageUrl];
+                  return { ...t, imageUrls: newUrls, imageUrl: newUrls[0] };
+              } else {
+                  // Replace current index
+                  if (t.imageUrls && Array.isArray(t.imageUrls) && t.imageUrls.length > 0) {
+                      const newUrls = [...t.imageUrls];
+                      newUrls[currentImageEditIndex] = imageUrl;
+                      return { ...t, imageUrls: newUrls, imageUrl: newUrls[0] };
                   }
+                  return { ...t, imageUrl: imageUrl, imageUrls: [imageUrl] };
               }
-          };
-          
-          reader.onerror = () => {
-              console.error('文件读取失败');
-              if (storageMode === 'browser') {
-                  alert('文件读取失败，请重试');
-              }
-          };
-          
-          reader.readAsDataURL(file);
+          }));
+
+          // 显示成功提示
+          const savedKB = ((result.originalSize - result.compressedSize) / 1024).toFixed(0);
+          console.log(`✅ 图片上传成功，节省 ${savedKB}KB`);
+
       } catch (error) {
-          console.error('上传图片出错:', error);
-          if (storageMode === 'browser') {
-              alert('上传图片出错，请重试');
-          }
+          console.error('图片上传失败:', error);
+          alert(`图片上传失败: ${error.message || '请重试'}`);
       } finally {
-          // 重置input，允许重复选择同一文件
-          if (e.target) {
-              e.target.value = '';
-          }
+          setIsUploadingImage(false);
+          setUploadProgress({ stage: '', progress: 0 });
       }
   };
 
@@ -2413,6 +2409,35 @@ const App = () => {
           <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/30">
             <Check size={18} />
             <span className="font-medium">{t('content_saved')}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 图片上传进度提示 */}
+      {isUploadingImage && (
+        <div className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 mx-4 max-w-sm w-full">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                <Loader2 size={24} className="text-orange-500 animate-spin" />
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-gray-800 mb-1">
+                  {uploadProgress.stage === 'compressing' && '正在压缩图片...'}
+                  {uploadProgress.stage === 'uploading' && '正在上传...'}
+                  {uploadProgress.stage === 'processing' && '处理中...'}
+                  {uploadProgress.stage === 'done' && '完成！'}
+                  {!uploadProgress.stage && '准备中...'}
+                </p>
+                <p className="text-sm text-gray-500">大图片会自动压缩，请稍候</p>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-300"
+                  style={{ width: `${uploadProgress.progress}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
