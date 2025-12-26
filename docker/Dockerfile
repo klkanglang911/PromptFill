@@ -15,7 +15,7 @@ RUN npm install
 # 复制前端源代码
 COPY src/ ./src/
 COPY public/ ./public/
-COPY index.html vite.config.js tailwind.config.js postcss.config.js ./
+COPY index.html admin.html vite.config.js tailwind.config.js postcss.config.js ./
 COPY .env.production ./
 
 # 构建前端
