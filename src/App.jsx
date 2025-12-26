@@ -594,6 +594,7 @@ const App = () => {
   const touchDragRef = useRef(null);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false); // 保存成功提示状态
   const [activePopover, setActivePopover] = useState(null);
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -1076,6 +1077,13 @@ const App = () => {
     if (isMobileDevice) {
       setMobileTab('editor');
     }
+  };
+
+  // 完成编辑 - 切换到预览模式并显示保存成功提示
+  const handleFinishEditing = () => {
+    setIsEditing(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
   };
 
   // 手动提交模板到云端
@@ -2386,16 +2394,26 @@ const App = () => {
     >
       {/* 移动端拖拽浮层 */}
       {touchDraggingVar && (
-        <div 
+        <div
           className="fixed z-[9999] pointer-events-none px-3 py-1.5 bg-orange-500 text-white rounded-lg shadow-2xl text-xs font-bold font-mono animate-in zoom-in-50 duration-200"
-          style={{ 
-            left: touchDraggingVar.x, 
-            top: touchDraggingVar.y, 
+          style={{
+            left: touchDraggingVar.x,
+            top: touchDraggingVar.y,
             transform: 'translate(-50%, -150%)',
             boxShadow: '0 0 20px rgba(249,115,22,0.4)'
           }}
         >
           {` {{${touchDraggingVar.key}}} `}
+        </div>
+      )}
+
+      {/* 保存成功提示 Toast */}
+      {saveSuccess && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] animate-in slide-in-from-top-4 fade-in duration-300">
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/30">
+            <Check size={18} />
+            <span className="font-medium">{t('content_saved')}</span>
+          </div>
         </div>
       )}
       
@@ -2619,7 +2637,7 @@ const App = () => {
                 )}
                 
                 {isEditing ? (
-                    <div className="flex-1 relative overflow-hidden">
+                    <div className="flex-1 relative overflow-hidden flex flex-col">
                         <VisualEditor
                             ref={textareaRef}
                             value={getLocalized(activeTemplate.content, templateLanguage)}
@@ -2637,6 +2655,16 @@ const App = () => {
                             banks={banks}
                             categories={categories}
                         />
+                        {/* 完成编辑按钮 */}
+                        <div className="flex-shrink-0 p-4 bg-gradient-to-t from-white via-white to-transparent border-t border-gray-100">
+                            <button
+                                onClick={handleFinishEditing}
+                                className="w-full py-3 px-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-xl shadow-lg shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                            >
+                                <Check size={18} />
+                                {t('finish_editing')}
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <TemplatePreview

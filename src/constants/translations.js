@@ -130,6 +130,9 @@ export const TRANSLATIONS = {
     template_pending: "模板审核中，请耐心等待",
     template_submitted: "模板已提交，等待审核",
     submit_failed: "提交失败，请重试",
+    // 完成编辑相关
+    finish_editing: "完成编辑",
+    content_saved: "内容已保存",
   },
   en: {
     template_management: "Templates",
@@ -261,5 +264,8 @@ export const TRANSLATIONS = {
     template_pending: "Template under review, please wait",
     template_submitted: "Template submitted, waiting for review",
     submit_failed: "Submit failed, please try again",
+    // Finish editing related
+    finish_editing: "Done",
+    content_saved: "Saved",
   },
 };
