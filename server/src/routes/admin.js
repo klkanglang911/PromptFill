@@ -19,195 +19,212 @@ const router = Router();
 // 可用的模板标签
 const TEMPLATE_TAGS = ["建筑", "人物", "摄影", "产品", "图表", "卡通", "宠物", "游戏", "创意"];
 
-// ============ 登录/登出 ============
+// ============ JSON API 路由 ============
 
-// 登录页面
-router.get('/login', skipIfAuth, (req, res) => {
-  res.render('admin/login', {
-    title: '管理员登录',
-    error: null
-  });
+// API: 检查认证状态
+router.get('/check-auth', (req, res) => {
+  if (req.session.admin) {
+    res.json({
+      authenticated: true,
+      admin: { username: req.session.admin.username }
+    });
+  } else {
+    res.json({ authenticated: false });
+  }
 });
 
-// 处理登录
-router.post('/login', skipIfAuth, async (req, res) => {
+// API: 登录
+router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.render('admin/login', {
-        title: '管理员登录',
+      return res.status(400).json({
+        success: false,
         error: '请输入用户名和密码'
       });
     }
 
     const admin = await validateAdmin(username, password);
     if (!admin) {
-      return res.render('admin/login', {
-        title: '管理员登录',
+      return res.status(401).json({
+        success: false,
         error: '用户名或密码错误'
       });
     }
 
     req.session.admin = admin;
-    res.redirect('/admin');
+    res.json({
+      success: true,
+      admin: { username: admin.username }
+    });
   } catch (error) {
     console.error('Login error:', error);
-    res.render('admin/login', {
-      title: '管理员登录',
+    res.status(500).json({
+      success: false,
       error: '登录失败，请重试'
     });
   }
 });
 
-// 登出
-router.get('/logout', (req, res) => {
+// API: 登出
+router.post('/logout', (req, res) => {
   req.session.destroy();
-  res.redirect('/admin/login');
+  res.json({ success: true });
 });
 
-// ============ 模板管理 ============
-
-// 模板列表（首页）- 显示所有模板及创建者信息
-router.get('/', requireAuth, (req, res) => {
-  const templates = getAllTemplates(false, true); // 包括未激活的，包含用户信息
-  const version = getVersion();
-  const pendingCount = getPendingTemplates().length;
-
-  res.render('admin/templates', {
-    title: '模板管理',
-    templates,
-    version,
-    pendingCount,
-    admin: req.session.admin,
-    success: req.query.success,
-    error: req.query.error
-  });
-});
-
-// 新建模板页面
-router.get('/templates/new', requireAuth, (req, res) => {
-  const categories = getAllCategories();
-  const banks = getAllBanks();
-
-  res.render('admin/template-edit', {
-    title: '新建模板',
-    template: null,
-    categories,
-    banks,
-    tags: TEMPLATE_TAGS,
-    admin: req.session.admin,
-    error: null
-  });
-});
-
-// 编辑模板页面
-router.get('/templates/:id/edit', requireAuth, (req, res) => {
-  const template = getTemplateById(req.params.id);
-  if (!template) {
-    return res.redirect('/admin?error=模板不存在');
-  }
-
-  const categories = getAllCategories();
-  const banks = getAllBanks();
-
-  res.render('admin/template-edit', {
-    title: '编辑模板',
-    template,
-    categories,
-    banks,
-    tags: TEMPLATE_TAGS,
-    admin: req.session.admin,
-    error: null
-  });
-});
-
-// 保存模板（新建或更新）
-router.post('/templates/:id?', requireAuth, (req, res) => {
+// API: 获取统计数据
+router.get('/stats', requireAuth, (req, res) => {
   try {
-    const { id } = req.params;
+    const templates = getAllTemplates(false, false);
+    const pendingTemplates = getPendingTemplates();
+
+    res.json({
+      totalTemplates: templates.length,
+      pendingCount: pendingTemplates.length,
+      activeTemplates: templates.filter(t => t.isActive).length
+    });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: '获取统计数据失败' });
+  }
+});
+
+// API: 获取所有模板
+router.get('/templates', requireAuth, (req, res) => {
+  try {
+    const templates = getAllTemplates(false, true); // 包括未激活的，包含用户信息
+    res.json({ templates });
+  } catch (error) {
+    console.error('Get templates error:', error);
+    res.status(500).json({ error: '获取模板列表失败' });
+  }
+});
+
+// API: 获取待审核模板
+router.get('/templates/pending', requireAuth, (req, res) => {
+  try {
+    const templates = getPendingTemplates();
+    res.json({ templates });
+  } catch (error) {
+    console.error('Get pending templates error:', error);
+    res.status(500).json({ error: '获取待审核模板失败' });
+  }
+});
+
+// API: 获取单个模板
+router.get('/templates/:id', requireAuth, (req, res) => {
+  try {
+    const template = getTemplateById(req.params.id, true);
+    if (!template) {
+      return res.status(404).json({ error: '模板不存在' });
+    }
+    res.json({ template });
+  } catch (error) {
+    console.error('Get template error:', error);
+    res.status(500).json({ error: '获取模板失败' });
+  }
+});
+
+// API: 创建模板
+router.post('/templates', requireAuth, (req, res) => {
+  try {
     const body = req.body;
 
     // 解析表单数据
     const templateData = {
-      id: body.id || id,
-      name_cn: body.name_cn,
-      name_en: body.name_en,
-      content_cn: body.content_cn,
-      content_en: body.content_en,
-      image_url: body.image_url,
-      image_urls: body.image_urls ? body.image_urls.split('\n').filter(u => u.trim()) : [],
+      id: body.id,
+      name_cn: body.name_cn || body.name?.cn || '',
+      name_en: body.name_en || body.name?.en || '',
+      content_cn: body.content_cn || body.content?.cn || '',
+      content_en: body.content_en || body.content?.en || '',
+      image_url: body.image_url || '',
+      image_urls: body.image_urls || [],
       author: body.author || '官方',
-      selections: body.selections ? JSON.parse(body.selections) : {},
-      tags: Array.isArray(body.tags) ? body.tags : (body.tags ? [body.tags] : []),
-      language: Array.isArray(body.language) ? body.language : (body.language ? [body.language] : ['cn', 'en']),
+      selections: body.selections || {},
+      tags: body.tags || [],
+      language: body.language || ['cn', 'en'],
       sort_order: parseInt(body.sort_order) || 0,
-      is_active: body.is_active === 'on' || body.is_active === '1'
+      is_active: body.is_active !== false
     };
 
-    // 验证必填字段
+    // 验证
     if (!templateData.id) {
-      throw new Error('模板 ID 不能为空');
+      return res.status(400).json({ error: '模板 ID 不能为空' });
     }
     if (!templateData.name_cn) {
-      throw new Error('中文名称不能为空');
-    }
-    if (!templateData.content_cn) {
-      throw new Error('中文内容不能为空');
+      return res.status(400).json({ error: '中文名称不能为空' });
     }
 
-    if (id) {
-      // 更新
-      updateTemplate(id, templateData);
-      res.redirect('/admin?success=模板已更新');
-    } else {
-      // 新建
-      if (getTemplateById(templateData.id)) {
-        throw new Error('模板 ID 已存在');
-      }
-      createTemplate(templateData);
-      res.redirect('/admin?success=模板已创建');
+    // 检查 ID 是否存在
+    if (getTemplateById(templateData.id)) {
+      return res.status(400).json({ error: '模板 ID 已存在' });
     }
+
+    const template = createTemplate(templateData);
+    res.json({ success: true, template });
   } catch (error) {
-    console.error('Save template error:', error);
-
-    const categories = getAllCategories();
-    const banks = getAllBanks();
-
-    res.render('admin/template-edit', {
-      title: req.params.id ? '编辑模板' : '新建模板',
-      template: req.body,
-      categories,
-      banks,
-      tags: TEMPLATE_TAGS,
-      admin: req.session.admin,
-      error: error.message
-    });
+    console.error('Create template error:', error);
+    res.status(500).json({ error: error.message || '创建模板失败' });
   }
 });
 
-// 删除模板
-router.post('/templates/:id/delete', requireAuth, (req, res) => {
+// API: 更新模板
+router.put('/templates/:id', requireAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+
+    const existing = getTemplateById(id);
+    if (!existing) {
+      return res.status(404).json({ error: '模板不存在' });
+    }
+
+    const templateData = {
+      name_cn: body.name_cn || body.name?.cn || '',
+      name_en: body.name_en || body.name?.en || '',
+      content_cn: body.content_cn || body.content?.cn || '',
+      content_en: body.content_en || body.content?.en || '',
+      image_url: body.image_url || '',
+      image_urls: body.image_urls || [],
+      author: body.author || '官方',
+      selections: body.selections || {},
+      tags: body.tags || [],
+      language: body.language || ['cn', 'en'],
+      sort_order: parseInt(body.sort_order) || 0,
+      is_active: body.is_active !== false
+    };
+
+    const template = updateTemplate(id, templateData);
+    res.json({ success: true, template });
+  } catch (error) {
+    console.error('Update template error:', error);
+    res.status(500).json({ error: error.message || '更新模板失败' });
+  }
+});
+
+// API: 删除模板
+router.delete('/templates/:id', requireAuth, (req, res) => {
   try {
     const template = getTemplateById(req.params.id);
     if (!template) {
-      return res.redirect('/admin?error=模板不存在');
+      return res.status(404).json({ error: '模板不存在' });
     }
 
     deleteTemplate(req.params.id);
-    res.redirect('/admin?success=模板已删除');
+    res.json({ success: true });
   } catch (error) {
     console.error('Delete template error:', error);
-    res.redirect('/admin?error=删除失败');
+    res.status(500).json({ error: '删除模板失败' });
   }
 });
 
-// 切换模板状态
+// API: 切换模板激活状态
 router.post('/templates/:id/toggle', requireAuth, (req, res) => {
   try {
     const template = getTemplateById(req.params.id);
     if (!template) {
-      return res.redirect('/admin?error=模板不存在');
+      return res.status(404).json({ error: '模板不存在' });
     }
 
     updateTemplate(req.params.id, {
@@ -215,88 +232,81 @@ router.post('/templates/:id/toggle', requireAuth, (req, res) => {
       is_active: !template.isActive
     });
 
-    res.redirect('/admin?success=模板状态已更新');
+    res.json({ success: true });
   } catch (error) {
     console.error('Toggle template error:', error);
-    res.redirect('/admin?error=操作失败');
+    res.status(500).json({ error: '操作失败' });
   }
 });
 
-// ============ 词库管理 ============
-
-router.get('/banks', requireAuth, (req, res) => {
-  const banks = getAllBanks();
-  const categories = getAllCategories();
-
-  res.render('admin/banks', {
-    title: '词库管理',
-    banks,
-    categories,
-    admin: req.session.admin
-  });
-});
-
-// ============ 用户模板管理（待审核）============
-
-// 待审核模板列表
-router.get('/pending', requireAuth, (req, res) => {
-  const pendingTemplates = getPendingTemplates();
-
-  res.render('admin/pending-templates', {
-    title: '待审核模板',
-    pendingTemplates,
-    admin: req.session.admin,
-    success: req.query.success,
-    error: req.query.error
-  });
-});
-
-// 审核通过模板
+// API: 审核通过模板
 router.post('/templates/:id/approve', requireAuth, (req, res) => {
   try {
     const template = getTemplateById(req.params.id);
     if (!template) {
-      return res.redirect('/admin/pending?error=模板不存在');
+      return res.status(404).json({ error: '模板不存在' });
     }
 
     updateTemplateStatus(req.params.id, 'approved');
-    res.redirect('/admin/pending?success=模板已通过审核');
+    res.json({ success: true });
   } catch (error) {
     console.error('Approve template error:', error);
-    res.redirect('/admin/pending?error=审核失败');
+    res.status(500).json({ error: '审核失败' });
   }
 });
 
-// 拒绝模板
+// API: 拒绝模板
 router.post('/templates/:id/reject', requireAuth, (req, res) => {
   try {
     const template = getTemplateById(req.params.id);
     if (!template) {
-      return res.redirect('/admin/pending?error=模板不存在');
+      return res.status(404).json({ error: '模板不存在' });
     }
 
     updateTemplateStatus(req.params.id, 'rejected');
-    res.redirect('/admin/pending?success=模板已拒绝');
+    res.json({ success: true });
   } catch (error) {
     console.error('Reject template error:', error);
-    res.redirect('/admin/pending?error=操作失败');
+    res.status(500).json({ error: '操作失败' });
   }
 });
 
-// ============ 版本管理 ============
+// API: 获取词库
+router.get('/banks', requireAuth, (req, res) => {
+  try {
+    const banks = getAllBanks();
+    const categories = getAllCategories();
+    res.json({ banks, categories });
+  } catch (error) {
+    console.error('Get banks error:', error);
+    res.status(500).json({ error: '获取词库失败' });
+  }
+});
 
+// API: 获取版本
+router.get('/version', requireAuth, (req, res) => {
+  try {
+    const version = getVersion();
+    res.json({ version });
+  } catch (error) {
+    console.error('Get version error:', error);
+    res.status(500).json({ error: '获取版本失败' });
+  }
+});
+
+// API: 更新版本
 router.post('/version', requireAuth, (req, res) => {
   try {
     const { version } = req.body;
     if (!version) {
-      return res.redirect('/admin?error=版本号不能为空');
+      return res.status(400).json({ error: '版本号不能为空' });
     }
 
     setDataVersion(version);
-    res.redirect('/admin?success=版本已更新');
+    res.json({ success: true, version });
   } catch (error) {
     console.error('Update version error:', error);
-    res.redirect('/admin?error=更新版本失败');
+    res.status(500).json({ error: '更新版本失败' });
   }
 });
 

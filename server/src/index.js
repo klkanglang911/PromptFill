@@ -48,7 +48,7 @@ app.use(session({
   }
 }));
 
-// 模板引擎
+// 模板引擎（保留用于兼容旧版）
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -68,8 +68,8 @@ app.use('/api/user', userRoutes);
 // 图片上传路由
 app.use('/api/upload', uploadRoutes);
 
-// 管理后台路由
-app.use('/admin', adminRoutes);
+// 管理后台 API 路由
+app.use('/api/admin', adminRoutes);
 
 // 健康检查
 app.get('/health', (req, res) => {
@@ -86,7 +86,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 PromptFill Server running on http://localhost:${PORT}`);
-  console.log(`📊 Admin panel: http://localhost:${PORT}/admin`);
+  console.log(`📊 Admin panel: http://localhost:1420/admin.html`);
   console.log(`📡 API endpoint: http://localhost:${PORT}/api`);
 });
 
