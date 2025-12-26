@@ -99,7 +99,8 @@ export async function compressImage(file, options = {}) {
  */
 export async function uploadImageWithCompression(file, options = {}) {
   const { maxSizeKB = 500, onProgress } = options;
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+  // API_BASE 已包含 /api 前缀，直接拼接后续路径
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
   try {
     onProgress?.({ stage: 'compressing', progress: 0 });
@@ -115,7 +116,7 @@ export async function uploadImageWithCompression(file, options = {}) {
     formData.append('image', compressedBlob, filename);
 
     // 上传到服务器
-    const response = await fetch(`${API_BASE}/api/upload/image`, {
+    const response = await fetch(`${API_BASE}/upload/image`, {
       method: 'POST',
       body: formData,
       credentials: 'include'
