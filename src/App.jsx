@@ -679,18 +679,25 @@ const App = () => {
         const response = await userTemplateApi.getAll();
         if (response.success && response.templates && response.templates.length > 0) {
           // 将用户模板合并到本地模板列表中
-          const userTemplates = response.templates.map(t => ({
+          const serverTemplates = response.templates.map(t => ({
             ...t,
             isUserCreated: true // 标记为用户创建的模板
           }));
 
+          // 创建服务器模板 ID 集合，用于去重
+          const serverIds = new Set(serverTemplates.map(t => t.id));
+
           setTemplates(prev => {
-            // 过滤掉本地已有的用户模板（避免重复）
+            // 保留系统模板
             const systemTemplates = prev.filter(t => !t.isUserCreated);
-            // 合并系统模板和用户模板
-            return [...systemTemplates, ...userTemplates];
+            // 保留本地未提交的模板（isLocal: true 且不在服务器列表中）
+            const localOnlyTemplates = prev.filter(t =>
+              t.isUserCreated && t.isLocal && !serverIds.has(t.id)
+            );
+            // 合并：系统模板 + 服务器用户模板 + 本地未提交模板
+            return [...systemTemplates, ...serverTemplates, ...localOnlyTemplates];
           });
-          console.log('✅ 用户模板加载成功，共', userTemplates.length, '个');
+          console.log('✅ 用户模板加载成功，共', serverTemplates.length, '个');
         }
       } catch (error) {
         console.warn('⚠️ 用户模板加载失败:', error.message);
@@ -1059,7 +1066,8 @@ const App = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const handleAddTemplate = () => {
-    const newId = `tpl_${Date.now()}`;
+    // 使用时间戳+随机数确保 ID 唯一，避免快速点击时重复
+    const newId = `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newTemplate = {
       id: newId,
       // 使用双语对象格式，确保后端能正确解析
@@ -1129,7 +1137,8 @@ const App = () => {
 
   const handleDuplicateTemplate = (t_item, e) => {
       e.stopPropagation();
-      const newId = `tpl_${Date.now()}`;
+      // 使用时间戳+随机数确保 ID 唯一
+      const newId = `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
       const duplicateName = (name) => {
         if (typeof name === 'string') return `${name}${t('copy_suffix')}`;
@@ -1561,8 +1570,8 @@ const App = () => {
                       alert('导入成功！');
                   }
               } else if (data.id && data.name) {
-                  // 单个模板
-                  const newId = `tpl_${Date.now()}`;
+                  // 单个模板 - 使用时间戳+随机数确保 ID 唯一
+                  const newId = `tpl_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
                   const newTemplate = { ...data, id: newId };
                   setTemplates(prev => [...prev, newTemplate]);
                   setActiveTemplateId(newId);
