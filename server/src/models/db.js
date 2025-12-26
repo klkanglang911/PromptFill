@@ -210,16 +210,34 @@ export function createTemplate(template, userId = null) {
   // 用户创建的模板默认为待审核状态，系统模板默认为已通过
   const defaultStatus = userId ? 'pending' : 'approved';
 
+  // 确定作者：优先使用传入的 author，否则查询用户昵称，最后使用"官方"
+  let author = template.author;
+  if (!author && userId) {
+    // 查询用户昵称
+    const user = db.prepare('SELECT nickname FROM users WHERE id = ?').get(userId);
+    author = user?.nickname || '';
+  } else if (!author) {
+    author = '官方';
+  }
+
+  // 支持 name 为字符串格式（向下兼容）
+  const nameCn = typeof template.name === 'string' ? template.name : (template.name?.cn || template.name_cn || '');
+  const nameEn = typeof template.name === 'string' ? template.name : (template.name?.en || template.name_en || '');
+
+  // 支持 content 为字符串格式（向下兼容）
+  const contentCn = typeof template.content === 'string' ? template.content : (template.content?.cn || template.content_cn || '');
+  const contentEn = typeof template.content === 'string' ? template.content : (template.content?.en || template.content_en || '');
+
   stmt.run(
     template.id,
     userId,
-    template.name?.cn || template.name_cn || '',
-    template.name?.en || template.name_en || '',
-    template.content?.cn || template.content_cn || '',
-    template.content?.en || template.content_en || '',
+    nameCn,
+    nameEn,
+    contentCn,
+    contentEn,
     template.imageUrl || template.image_url || '',
     JSON.stringify(template.imageUrls || template.image_urls || []),
-    template.author || (userId ? '' : '官方'),
+    author,
     JSON.stringify(template.selections || {}),
     JSON.stringify(template.tags || []),
     JSON.stringify(template.language || ['cn', 'en']),
@@ -233,6 +251,18 @@ export function createTemplate(template, userId = null) {
 }
 
 export function updateTemplate(id, template) {
+  // 支持 name 为字符串格式（向下兼容）
+  const nameCn = typeof template.name === 'string' ? template.name : (template.name?.cn || template.name_cn || '');
+  const nameEn = typeof template.name === 'string' ? template.name : (template.name?.en || template.name_en || '');
+
+  // 支持 content 为字符串格式（向下兼容）
+  const contentCn = typeof template.content === 'string' ? template.content : (template.content?.cn || template.content_cn || '');
+  const contentEn = typeof template.content === 'string' ? template.content : (template.content?.en || template.content_en || '');
+
+  // 获取现有模板信息，以保留未提供的字段
+  const existing = getTemplateById(id, true);
+  const author = template.author || existing?.author || '官方';
+
   const stmt = db.prepare(`
     UPDATE templates SET
       name_cn = ?, name_en = ?, content_cn = ?, content_en = ?,
@@ -243,13 +273,13 @@ export function updateTemplate(id, template) {
   `);
 
   stmt.run(
-    template.name?.cn || template.name_cn || '',
-    template.name?.en || template.name_en || '',
-    template.content?.cn || template.content_cn || '',
-    template.content?.en || template.content_en || '',
+    nameCn,
+    nameEn,
+    contentCn,
+    contentEn,
     template.imageUrl || template.image_url || '',
     JSON.stringify(template.imageUrls || template.image_urls || []),
-    template.author || '官方',
+    author,
     JSON.stringify(template.selections || {}),
     JSON.stringify(template.tags || []),
     JSON.stringify(template.language || ['cn', 'en']),

@@ -1062,9 +1062,17 @@ const App = () => {
     const newId = `tpl_${Date.now()}`;
     const newTemplate = {
       id: newId,
-      name: t('new_template_name'),
-      author: "",
-      content: t('new_template_content'),
+      // 使用双语对象格式，确保后端能正确解析
+      name: {
+        cn: TRANSLATIONS.cn.new_template_name,
+        en: TRANSLATIONS.en.new_template_name
+      },
+      // 使用当前登录用户的昵称作为作者
+      author: currentUser?.nickname || "",
+      content: {
+        cn: TRANSLATIONS.cn.new_template_content,
+        en: TRANSLATIONS.en.new_template_content
+      },
       selections: {},
       tags: [],
       isUserCreated: true, // 标记为用户创建的模板
