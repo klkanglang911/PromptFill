@@ -14,3 +14,5 @@ export { MobileSettingsView } from './MobileSettingsView';
 export { AuthModal } from './AuthModal';
 export { FinishEditDialog } from './FinishEditDialog';
 export { CopyrightModal } from './CopyrightModal';
+export { SettingsView } from './SettingsView';
+export { Sidebar } from './Sidebar';

@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  background: linear-gradient(180deg, #D6D6D6 0%, #DFDFDF 100%);
+  background-attachment: fixed;
+  margin: 0;
+  min-height: 100vh;
+}
+
 /* Custom Scrollbar Styles */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
@@ -177,17 +184,9 @@
   will-change: transform;
 }
 
-/* 高级网格渐变背景 - 性能更优，无撕裂 */
+/* 全局最底层背景色 */
 .mesh-gradient-bg {
-  background-color: #f8fafc;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(251, 146, 60, 0.08) 0px, transparent 50%),
-    radial-gradient(at 50% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(251, 146, 60, 0.05) 0px, transparent 50%),
-    radial-gradient(at 95% 50%, rgba(251, 146, 60, 0.08) 0px, transparent 50%),
-    radial-gradient(at 5% 50%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(251, 146, 60, 0.05) 0px, transparent 50%);
+  background: linear-gradient(180deg, #D6D6D6 0%, #DFDFDF 100%);
   background-attachment: fixed;
 }
 

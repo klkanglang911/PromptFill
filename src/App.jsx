@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Copy, Plus, X, Settings, Check, Edit3, Eye, Trash2, FileText, Pencil, Copy as CopyIcon, Globe, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, GripVertical, Download, Upload, Image as ImageIcon, List, Undo, Redo, Maximize2, RotateCcw, LayoutGrid, Sidebar, Search, ArrowRight, User, ArrowUpRight, ArrowUpDown, RefreshCw, Sparkles, Loader2 } from 'lucide-react';
+import { Copy, Plus, X, Settings, Check, Edit3, Eye, Trash2, FileText, Pencil, Copy as CopyIcon, Globe, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, GripVertical, Download, Upload, Image as ImageIcon, List, Undo, Redo, Maximize2, RotateCcw, LayoutGrid, Search, ArrowRight, User, ArrowUpRight, ArrowUpDown, RefreshCw, Sparkles, Sun, Moon, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 // ====== 导入数据配置 ======
@@ -24,11 +24,27 @@ import { templateApi, versionApi, authApi, userTemplateApi } from './services/ap
 import { useStickyState } from './hooks/useStickyState';
 
 // ====== 导入 UI 组件 ======
-import { Variable, VisualEditor, PremiumButton, EditorToolbar, Lightbox, TemplatePreview, TemplatesSidebar, BanksSidebar, CategoryManager, InsertVariableModal, AddBankModal, DiscoveryView, MobileSettingsView, AuthModal, FinishEditDialog, CopyrightModal } from './components';
+import { Variable, VisualEditor, PremiumButton, EditorToolbar, Lightbox, TemplatePreview, TemplatesSidebar, BanksSidebar, CategoryManager, InsertVariableModal, AddBankModal, DiscoveryView, MobileSettingsView, AuthModal, FinishEditDialog, CopyrightModal, SettingsView, Sidebar } from './components';
 import MobileTabBar from './components/MobileTabBar';
 
 // --- 组件：图片 3D 预览弹窗 (优化性能，状态局部化) ---
-const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_STYLES, displayTag, setActiveTemplateId, setDiscoveryView, setZoomedImage, setMobileTab, requireAuth }) => {
+const ImagePreviewModal = React.memo(({
+  zoomedImage,
+  template,
+  language,
+  setLanguage,
+  t,
+  TAG_STYLES,
+  displayTag,
+  setActiveTemplateId,
+  setDiscoveryView,
+  setZoomedImage,
+  setMobileTab,
+  handleRefreshSystemData,
+  setIsSettingsOpen,
+  isDarkMode,
+  requireAuth
+}) => {
   const [modalMousePos, setModalMousePos] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   const touchStartY = useRef(0);
@@ -223,9 +239,14 @@ const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_
                   {/* Header Row */}
                   <div className="px-6 flex items-center justify-between gap-4 mb-2 header-trigger flex-shrink-0">
                       <div className="flex-1 min-w-0">
-                        <h2 className="text-xl font-bold text-gray-900 truncate mb-1">
+                        <h2 className="text-xl font-bold text-gray-900 truncate mb-0.5">
                           {getLocalized(template?.name, language)}
                         </h2>
+                        {template?.author && (
+                          <div className="mb-1.5 opacity-60">
+                            <span className="text-[10px] font-medium text-gray-600 truncate">{template.author}</span>
+                          </div>
+                        )}
                         <div className="flex flex-wrap gap-1.5">
                           {(template?.tags || []).slice(0, 2).map(tag => (
                             <span key={tag} className="px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-[9px] font-bold text-gray-500 uppercase">
@@ -369,9 +390,14 @@ const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_
                 {template ? (
                     <>
                         <div className={`mb-4 md:mb-8`}>
-                            <h2 className={`font-bold text-white mb-2 md:mb-4 tracking-tight leading-tight text-4xl md:text-5xl`}>
+                            <h2 className={`font-bold text-white mb-2 md:mb-3 tracking-tight leading-tight text-4xl md:text-5xl`}>
                                 {getLocalized(template.name, language)}
                             </h2>
+                            {template.author && (
+                              <div className="mb-4 opacity-70">
+                                <span className="text-sm font-bold text-white/90 tracking-wide">{template.author}</span>
+                              </div>
+                            )}
                             <div className="flex flex-wrap gap-2 opacity-80">
                                 {(template.tags || []).map(tag => (
                                     <span key={tag} className={`px-2 py-0.5 md:px-3 md:py-1 rounded-lg text-[10px] md:text-[11px] font-bold tracking-wider uppercase border border-white/20 bg-white/5 text-white`}>
@@ -384,7 +410,7 @@ const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_
                         <div className={`w-full mb-6 md:mb-10 flex-1 overflow-hidden flex flex-col`}>
                             <div className="flex items-center gap-4 mb-3">
                                 <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">Content</h3>
-                                <div className="h-px flex-1 bg-white/10"></div>
+                                <div className="h-px flex-1 bg-white/5"></div>
                             </div>
                             <div className={`text-white/80 leading-relaxed whitespace-pre-wrap font-medium overflow-y-auto custom-scrollbar-white pr-4 text-base md:text-lg max-h-[40vh]`}>
                                 {getLocalized(template.content, language)}
@@ -403,6 +429,7 @@ const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_
                                 color="slate"
                                 hoverColor="orange"
                                 active={true}
+                                isDarkMode={true}
                                 className={`w-full font-black shadow-2xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-3 !py-5 !rounded-2xl !text-lg hover:-translate-y-1`}
                             >
                                 {t('use_template') || '使用此模板'}
@@ -433,7 +460,7 @@ const ImagePreviewModal = React.memo(({ zoomedImage, template, language, t, TAG_
 });
 
 // --- 组件：动态 Slogan (PC端) ---
-const AnimatedSlogan = React.memo(({ isActive, language }) => {
+const AnimatedSlogan = React.memo(({ isActive, language, isDarkMode }) => {
   const [sceneIndex, setSceneIndex] = useState(0);
   const [styleIndex, setStyleIndex] = useState(0);
 
@@ -456,7 +483,7 @@ const AnimatedSlogan = React.memo(({ isActive, language }) => {
   }, [isActive, currentScenes.length, currentStyles.length]);
 
   return (
-    <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-2 gap-y-3 text-base md:text-lg lg:text-xl text-gray-700 font-medium font-['MiSans',system-ui,sans-serif] px-2 leading-relaxed min-h-[60px]">
+    <div className={`flex flex-wrap items-center justify-center lg:justify-start gap-x-2 gap-y-3 text-base md:text-lg lg:text-xl font-medium font-['MiSans',system-ui,sans-serif] px-2 leading-relaxed min-h-[60px] ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>
       <span className="whitespace-nowrap">"{language === 'en' ? 'Show a detailed, miniature' : '展示一个精致的、微缩'}</span>
       <div className="inline-flex items-center justify-center min-w-[120px]">
         <span 
@@ -464,8 +491,10 @@ const AnimatedSlogan = React.memo(({ isActive, language }) => {
           className="inline-block px-4 py-1.5 md:px-5 md:py-2 rounded-full transition-all duration-500 select-none font-bold text-white whitespace-nowrap pill-animate"
           style={{
             background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
-            boxShadow: 'inset 0px 2px 4px 0px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(96, 165, 250, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: isDarkMode 
+              ? 'inset 0px 2px 4px 0px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(96, 165, 250, 0.2)'
+              : 'inset 0px 2px 4px 0px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(96, 165, 250, 0.4)',
+            border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.3)',
             textShadow: '0 1px 2px rgba(0,0,0,0.1)'
           }}
         >
@@ -479,8 +508,10 @@ const AnimatedSlogan = React.memo(({ isActive, language }) => {
           className="inline-block px-4 py-1.5 md:px-5 md:py-2 rounded-full transition-all duration-500 select-none font-bold text-white whitespace-nowrap pill-animate"
           style={{
             background: 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)',
-            boxShadow: 'inset 0px 2px 4px 0px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(251, 146, 60, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: isDarkMode 
+              ? 'inset 0px 2px 4px 0px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(251, 146, 60, 0.2)'
+              : 'inset 0px 2px 4px 0px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(251, 146, 60, 0.4)',
+            border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.3)',
             textShadow: '0 1px 2px rgba(0,0,0,0.1)'
           }}
         >
@@ -493,7 +524,7 @@ const AnimatedSlogan = React.memo(({ isActive, language }) => {
 });
 
 // --- 组件：动态 Slogan (移动端) ---
-const MobileAnimatedSlogan = React.memo(({ isActive, language }) => {
+const MobileAnimatedSlogan = React.memo(({ isActive, language, isDarkMode }) => {
   const [sceneIndex, setSceneIndex] = useState(0);
   const [styleIndex, setStyleIndex] = useState(0);
 
@@ -516,7 +547,7 @@ const MobileAnimatedSlogan = React.memo(({ isActive, language }) => {
   }, [isActive, currentScenes.length, currentStyles.length]);
 
     return (
-    <div className="flex flex-wrap items-center justify-center gap-1.5 text-sm text-gray-700 font-medium mb-3 min-h-[32px]">
+    <div className={`flex flex-wrap items-center justify-center gap-1.5 text-sm font-medium mb-3 min-h-[32px] ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>
       <span className="whitespace-nowrap">"{language === 'en' ? 'Show' : '展示'}</span>
       <div className="inline-flex items-center justify-center min-w-[80px]">
         <span 
@@ -524,7 +555,9 @@ const MobileAnimatedSlogan = React.memo(({ isActive, language }) => {
           className="inline-block px-2.5 py-0.5 rounded-full font-bold text-white text-xs whitespace-nowrap pill-animate"
           style={{
             background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
-            boxShadow: '0 2px 8px rgba(96, 165, 250, 0.3)'
+            boxShadow: isDarkMode 
+              ? 'inset 0px 2px 4px 0px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(96, 165, 250, 0.2)'
+              : '0 2px 8px rgba(96, 165, 250, 0.3)'
           }}
         >
           {currentStyles[styleIndex]}
@@ -537,7 +570,9 @@ const MobileAnimatedSlogan = React.memo(({ isActive, language }) => {
           className="inline-block px-2.5 py-0.5 rounded-full font-bold text-white text-xs whitespace-nowrap pill-animate"
           style={{
             background: 'linear-gradient(135deg, #f97316 0%, #fb923c 100%)',
-            boxShadow: '0 2px 8px rgba(251, 146, 60, 0.3)'
+            boxShadow: isDarkMode 
+              ? 'inset 0px 2px 4px 0px rgba(255, 255, 255, 0.1), 0 4px 12px rgba(251, 146, 60, 0.2)'
+              : '0 2px 8px rgba(251, 146, 60, 0.3)'
           }}
         >
           {currentScenes[sceneIndex]}
@@ -576,6 +611,9 @@ const App = () => {
   const [templates, setTemplates] = useStickyState(INITIAL_TEMPLATES_CONFIG, "app_templates_v10");
   const [activeTemplateId, setActiveTemplateId] = useStickyState("tpl_default", "app_active_template_id_v4");
 
+  const [lastAppliedDataVersion, setLastAppliedDataVersion] = useStickyState("", "app_data_version_v1");
+  const [isDarkMode, setIsDarkMode] = useStickyState(false, "app_dark_mode_v1");
+  const [showDataUpdateNotice, setShowDataUpdateNotice] = useState(false);
   const [showAppUpdateNotice, setShowAppUpdateNotice] = useState(false);
 
   // 远程模板加载状态
@@ -741,6 +779,46 @@ const App = () => {
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [randomSeed, setRandomSeed] = useState(Date.now()); // 用于随机排序的种子
 
+  // 趣味设计：灯具摆动状态
+  const [lampRotation, setLampRotation] = useState(0);
+  const [isLampHovered, setIsLampHovered] = useState(false);
+  const [isLampOn, setIsLampOn] = useState(true); // 暗色模式下灯是否开启 (强度控制)
+
+  // 当暗夜模式关闭时，重置灯的状态为开启
+  useEffect(() => {
+    if (!isDarkMode) {
+      setIsLampOn(true);
+    }
+  }, [isDarkMode]);
+
+  const handleLampMouseMove = (e) => {
+    if (!isDarkMode) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const mouseX = e.clientX;
+    const diffX = mouseX - centerX;
+    // 灵敏度提升：由于感应区缩小到 32px，调整系数以保持摆动幅度
+    const rotation = Math.max(-12, Math.min(12, -diffX / 1.5));
+    setLampRotation(rotation);
+    setIsLampHovered(true);
+  };
+
+  // 检查系统模版更新
+  // 检测数据版本更新 (模板与词库)
+  useEffect(() => {
+    if (SYSTEM_DATA_VERSION && lastAppliedDataVersion !== SYSTEM_DATA_VERSION) {
+      // 检查是否有存储的数据。如果是第一次使用（无数据），直接静默更新版本号
+      const hasTemplates = localStorage.getItem("app_templates_v10");
+      const hasBanks = localStorage.getItem("app_banks_v9");
+
+      if (hasTemplates || hasBanks) {
+        setShowDataUpdateNotice(true);
+      } else {
+        setLastAppliedDataVersion(SYSTEM_DATA_VERSION);
+      }
+    }
+  }, [lastAppliedDataVersion]);
+
   // 检查应用代码版本更新
   useEffect(() => {
     const checkUpdates = async () => {
@@ -764,6 +842,11 @@ const App = () => {
             setShowAppUpdateNotice(true);
           }
 
+          // 检查数据版本更新（模板和词库）
+          // 只有当服务器版本不同于已应用版本，且我们也还没在代码里包含这个版本时才提示
+          if (data.dataVersion && data.dataVersion !== lastAppliedDataVersion && data.dataVersion !== SYSTEM_DATA_VERSION) {
+            setShowDataUpdateNotice(true);
+          }
         }
       } catch (e) {
         // 静默失败
@@ -809,6 +892,11 @@ const App = () => {
   const [historyPast, setHistoryPast] = useState([]);
   const [historyFuture, setHistoryFuture] = useState([]);
   const historyLastSaveTime = useRef(0);
+
+  // Cursor State for Grouping
+  const [cursorInVariable, setCursorInVariable] = useState(false);
+  const [currentVariableName, setCurrentVariableName] = useState(null);
+  const [currentGroupId, setCurrentGroupId] = useState(null);
 
   const popoverRef = useRef(null);
   const textareaRef = useRef(null);
@@ -1323,6 +1411,9 @@ const App = () => {
     setBanks(bankResult.banks);
     setDefaults(bankResult.defaults);
     setActiveTemplateId(prev => templateResult.templates.some(t => t.id === prev) ? prev : "tpl_default");
+    
+    // 更新版本号，避免再次提示更新
+    setLastAppliedDataVersion(SYSTEM_DATA_VERSION);
 
     const notes = [...templateResult.notes, ...bankResult.notes];
     if (notes.length > 0) {
@@ -1343,48 +1434,55 @@ const App = () => {
     setSelectedTags(prevTag => prevTag === tag ? "" : tag);
   };
 
-  // Filter templates based on search and tags
-  const filteredTemplates = React.useMemo(() => {
+  // Base filtered templates (by search and language)
+  const baseFilteredTemplates = React.useMemo(() => {
     return templates.filter(t => {
-    // Search filter
-    const templateName = getLocalized(t.name, language);
-    const matchesSearch = !searchQuery || 
-      templateName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Tag filter
-    const matchesTags = selectedTags === "" || 
-      (t.tags && t.tags.includes(selectedTags));
+      // Search filter
+      const templateName = getLocalized(t.name, language);
+      const matchesSearch = !searchQuery || 
+        templateName.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // 语言过滤：如果模板指定了语言，且不包含当前语言，则隐藏
+      const templateLangs = t.language ? (Array.isArray(t.language) ? t.language : [t.language]) : ['cn', 'en'];
+      const matchesLanguage = templateLangs.includes(language);
+      
+      return matchesSearch && matchesLanguage;
+    });
+  }, [templates, searchQuery, language]);
 
-    // 语言过滤：如果模板指定了语言，且不包含当前语言，则隐藏
-    // 如果没有指定语言属性，默认显示（向下兼容）
-    const templateLangs = t.language ? (Array.isArray(t.language) ? t.language : [t.language]) : ['cn', 'en'];
-    const matchesLanguage = templateLangs.includes(language);
-    
-    return matchesSearch && matchesTags && matchesLanguage;
-  }).sort((a, b) => {
-    // Sort templates based on sortOrder
-    const nameA = getLocalized(a.name, language);
-    const nameB = getLocalized(b.name, language);
-    switch(sortOrder) {
-      case 'newest':
-        // Assuming templates array index as chronological order (newer = later in array)
-        return templates.indexOf(b) - templates.indexOf(a);
-      case 'oldest':
-        return templates.indexOf(a) - templates.indexOf(b);
-      case 'a-z':
-        return nameA.localeCompare(nameB, language === 'cn' ? 'zh-CN' : 'en');
-      case 'z-a':
-        return nameB.localeCompare(nameA, language === 'cn' ? 'zh-CN' : 'en');
-      case 'random':
-        // 使用模板ID和随机种子生成伪随机数进行排序
-        const hashA = (a.id + randomSeed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const hashB = (b.id + randomSeed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return hashA - hashB;
-      default:
-        return 0;
-    }
-  });
-  }, [templates, searchQuery, selectedTags, sortOrder, randomSeed, language]);
+  // Discovery View templates (ignore tags, but respect search, language and sort)
+  const discoveryTemplates = React.useMemo(() => {
+    return [...baseFilteredTemplates].sort((a, b) => {
+      const nameA = getLocalized(a.name, language);
+      const nameB = getLocalized(b.name, language);
+      switch(sortOrder) {
+        case 'newest':
+          return templates.indexOf(b) - templates.indexOf(a);
+        case 'oldest':
+          return templates.indexOf(a) - templates.indexOf(b);
+        case 'a-z':
+          return nameA.localeCompare(nameB, language === 'cn' ? 'zh-CN' : 'en');
+        case 'z-a':
+          return nameB.localeCompare(nameA, language === 'cn' ? 'zh-CN' : 'en');
+        case 'random':
+          const hashA = (a.id + randomSeed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const hashB = (b.id + randomSeed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          return hashA - hashB;
+        default:
+          return 0;
+      }
+    });
+  }, [baseFilteredTemplates, sortOrder, randomSeed, language, templates]);
+
+  // Filter templates based on tags for sidebar
+  const filteredTemplates = React.useMemo(() => {
+    return discoveryTemplates.filter(t => {
+      // Tag filter
+      const matchesTags = selectedTags === "" || 
+        (t.tags && t.tags.includes(selectedTags));
+      return matchesTags;
+    });
+  }, [discoveryTemplates, selectedTags]);
 
   const fileInputRef = useRef(null);
 
@@ -1849,12 +1947,255 @@ const App = () => {
       ));
   }, [activeTemplate.content, activeTemplateId, historyFuture, setTemplates]);
 
-  const updateActiveTemplateSelection = React.useCallback((uniqueKey, value) => {
+  // 变量解析工具函数：从变量名中提取 baseKey 和 groupId
+  // 例如: "fruit_1" -> { baseKey: "fruit", groupId: "1" }
+  //      "fruit" -> { baseKey: "fruit", groupId: null }
+  const parseVariableName = React.useCallback((varName) => {
+    const match = varName.match(/^(.+?)(?:_(\d+))?$/);
+    if (match) {
+      return {
+        baseKey: match[1],
+        groupId: match[2] || null
+      };
+    }
+    return { baseKey: varName, groupId: null };
+  }, []);
+
+  // 检测光标是否在变量内，并提取当前变量信息
+  const detectCursorInVariable = React.useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea || !isEditing) {
+      setCursorInVariable(false);
+      setCurrentVariableName(null);
+      setCurrentGroupId(null);
+      return;
+    }
+
+    const text = textarea.value;
+    const cursorPos = textarea.selectionStart;
+
+    // 向前查找最近的 {{
+    let startPos = cursorPos;
+    while (startPos > 0 && text.substring(startPos - 2, startPos) !== '{{') {
+      startPos--;
+    }
+    
+    // 向后查找最近的 }}
+    let endPos = cursorPos;
+    while (endPos < text.length && text.substring(endPos, endPos + 2) !== '}}') {
+      endPos++;
+    }
+
+    // 检查光标是否在 {{...}} 之间
+    if (startPos >= 0 && endPos < text.length && 
+        text.substring(startPos - 2, startPos) === '{{' && 
+        text.substring(endPos, endPos + 2) === '}}') {
+      // 光标在变量内
+      const variableName = text.substring(startPos, endPos).trim();
+      const parsed = parseVariableName(variableName);
+      
+      setCursorInVariable(true);
+      setCurrentVariableName(variableName);
+      setCurrentGroupId(parsed.groupId);
+    } else {
+      setCursorInVariable(false);
+      setCurrentVariableName(null);
+      setCurrentGroupId(null);
+    }
+  }, [isEditing, parseVariableName]);
+
+  // 监听光标位置变化
+  React.useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea || !isEditing) return;
+
+    const handleSelectionChange = () => {
+      detectCursorInVariable();
+    };
+
+    textarea.addEventListener('keyup', handleSelectionChange);
+    textarea.addEventListener('click', handleSelectionChange);
+    textarea.addEventListener('select', handleSelectionChange);
+
+    return () => {
+      textarea.removeEventListener('keyup', handleSelectionChange);
+      textarea.removeEventListener('click', handleSelectionChange);
+      textarea.removeEventListener('select', handleSelectionChange);
+    };
+  }, [isEditing, detectCursorInVariable]);
+
+  // 设置分组：为当前变量添加或修改分组后缀
+  const handleSetGroup = React.useCallback((groupNum) => {
+    if (!cursorInVariable || !currentVariableName) return;
+
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const text = textarea.value;
+    const cursorPos = textarea.selectionStart;
+
+    // 向前查找最近的 {{
+    let startPos = cursorPos;
+    while (startPos > 0 && text.substring(startPos - 2, startPos) !== '{{') {
+      startPos--;
+    }
+    
+    // 向后查找最近的 }}
+    let endPos = cursorPos;
+    while (endPos < text.length && text.substring(endPos, endPos + 2) !== '}}') {
+      endPos++;
+    }
+
+    if (startPos >= 0 && endPos < text.length) {
+      const variableName = text.substring(startPos, endPos).trim();
+      const parsed = parseVariableName(variableName);
+      const baseKey = parsed.baseKey;
+      
+      // 构建新的变量名：baseKey_groupNum
+      const newVariableName = `${baseKey}_${groupNum}`;
+      
+      // 替换文本：只替换 {{ 和 }} 之间的内容
+      const before = text.substring(0, startPos);
+      const after = text.substring(endPos);
+      const newText = `${before}${newVariableName}${after}`;
+      
+      // 更新内容
+      const currentContent = activeTemplate.content;
+      const isMultilingual = typeof currentContent === 'object';
+      if (isMultilingual) {
+        updateActiveTemplateContent({
+          ...currentContent,
+          [templateLanguage]: newText
+        }, true);
+      } else {
+        updateActiveTemplateContent(newText, true);
+      }
+
+      // 恢复光标位置（调整偏移）
+      setTimeout(() => {
+        const offset = newVariableName.length - variableName.length;
+        const newCursorPos = cursorPos + offset;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.focus();
+        detectCursorInVariable();
+      }, 0);
+    }
+  }, [cursorInVariable, currentVariableName, parseVariableName, activeTemplate.content, templateLanguage, updateActiveTemplateContent, detectCursorInVariable]);
+
+  // 移除分组：移除当前变量的分组后缀
+  const handleRemoveGroup = React.useCallback(() => {
+    if (!cursorInVariable || !currentVariableName || !currentGroupId) return;
+
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const text = textarea.value;
+    const cursorPos = textarea.selectionStart;
+
+    // 向前查找最近的 {{
+    let startPos = cursorPos;
+    while (startPos > 0 && text.substring(startPos - 2, startPos) !== '{{') {
+      startPos--;
+    }
+    
+    // 向后查找最近的 }}
+    let endPos = cursorPos;
+    while (endPos < text.length && text.substring(endPos, endPos + 2) !== '}}') {
+      endPos++;
+    }
+
+    if (startPos >= 0 && endPos < text.length) {
+      const variableName = text.substring(startPos, endPos).trim();
+      const parsed = parseVariableName(variableName);
+      const baseKey = parsed.baseKey;
+      
+      // 新的变量名：只保留 baseKey，移除后缀
+      const newVariableName = baseKey;
+      
+      // 替换文本：只替换 {{ 和 }} 之间的内容
+      const before = text.substring(0, startPos);
+      const after = text.substring(endPos);
+      const newText = `${before}${newVariableName}${after}`;
+      
+      // 更新内容
+      const currentContent = activeTemplate.content;
+      const isMultilingual = typeof currentContent === 'object';
+      if (isMultilingual) {
+        updateActiveTemplateContent({
+          ...currentContent,
+          [templateLanguage]: newText
+        }, true);
+      } else {
+        updateActiveTemplateContent(newText, true);
+      }
+
+      // 恢复光标位置（调整偏移）
+      setTimeout(() => {
+        const offset = newVariableName.length - variableName.length;
+        const newCursorPos = cursorPos + offset;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.focus();
+        detectCursorInVariable();
+      }, 0);
+    }
+  }, [cursorInVariable, currentVariableName, currentGroupId, parseVariableName, activeTemplate.content, templateLanguage, updateActiveTemplateContent, detectCursorInVariable]);
+
+  // 查找模板中所有需要联动的变量
+  // 规则：如果变量有 groupId，找到所有相同 baseKey 且有相同 groupId 的变量
+  // 例如：{{fruit}}_1 和 {{fruit}}_2 如果 groupId 都是 "1"，则联动
+  // 但更常见的用法是：{{fruit}}_1 和 {{fruit}}_2 应该联动（因为它们都是同一组）
+  // 我们使用一个更简单的规则：所有相同 baseKey 且有 groupId 的变量都联动（无论 groupId 是否相同）
+  // 或者更精确：相同 baseKey 且 groupId 相同的变量联动
+  // 为了灵活性，我们采用：相同 baseKey 且都有 groupId 的变量都联动（简化版）
+  // 但用户可能想要：{{fruit}}_1 和 {{fruit}}_2 联动，{{fruit}}_3 和 {{fruit}}_4 联动
+  // 这意味着我们需要一个更智能的规则
+  // 
+  // 重新理解需求：用户说 "_1的成组联动，_2的成组联动"
+  // 这意味着：所有带 _1 后缀的变量联动，所有带 _2 后缀的变量联动
+  // 所以规则应该是：相同 baseKey 且相同 groupId 的变量联动
+  const findLinkedVariables = React.useCallback((template, baseKey, groupId) => {
+    if (!groupId) return []; // 没有 groupId 的变量不联动
+    
+    const linkedKeys = [];
+    const content = typeof template.content === 'object' 
+      ? Object.values(template.content).join('\n')
+      : template.content || '';
+    
+    // 找到所有 {{baseKey_groupId}} 格式的变量
+    const allMatches = content.matchAll(/\{\{([^}]+)\}\}/g);
+    const counters = {};
+    
+    for (const match of allMatches) {
+      const fullKey = match[1].trim();
+      const parsed = parseVariableName(fullKey);
+      
+      // 匹配相同 baseKey 且有 groupId 的变量（所有带数字后缀的都联动）
+      // 例如：{{fruit}}_1 和 {{fruit}}_2 会联动，因为它们都有相同的 baseKey 且都有 groupId
+      if (parsed.baseKey === baseKey && parsed.groupId !== null) {
+        const idx = counters[fullKey] || 0;
+        counters[fullKey] = idx + 1;
+        linkedKeys.push(`${fullKey}-${idx}`);
+      }
+    }
+    
+    return linkedKeys;
+  }, [parseVariableName]);
+
+  const updateActiveTemplateSelection = React.useCallback((uniqueKey, value, linkedKeys = []) => {
     setTemplates(prev => prev.map(t => {
       if (t.id === activeTemplateId) {
+        const newSelections = { ...t.selections, [uniqueKey]: value };
+        
+        // 同步更新所有联动的变量
+        linkedKeys.forEach(linkedKey => {
+          if (linkedKey !== uniqueKey) {
+            newSelections[linkedKey] = value;
+          }
+        });
+        
         return {
           ...t,
-          selections: { ...t.selections, [uniqueKey]: value }
+          selections: newSelections
         };
       }
       return t;
@@ -1865,21 +2206,38 @@ const App = () => {
 
   const handleSelect = React.useCallback((key, index, value) => {
     const uniqueKey = `${key}-${index}`;
-    updateActiveTemplateSelection(uniqueKey, value);
+    
+    // 解析变量名，检查是否有联动组
+    const parsed = parseVariableName(key);
+    
+    // 如果有关联组，找到所有需要联动的变量
+    let linkedKeys = [];
+    if (parsed.groupId) {
+      const activeTemplate = templates.find(t => t.id === activeTemplateId);
+      if (activeTemplate) {
+        linkedKeys = findLinkedVariables(activeTemplate, parsed.baseKey, parsed.groupId);
+      }
+    }
+    
+    updateActiveTemplateSelection(uniqueKey, value, linkedKeys);
     setActivePopover(null);
-  }, [updateActiveTemplateSelection]);
+  }, [parseVariableName, findLinkedVariables, updateActiveTemplateSelection, templates, activeTemplateId]);
 
   const handleAddCustomAndSelect = React.useCallback((key, index, newValue) => {
     if (!newValue || !newValue.trim()) return;
     
-    // 1. Add to bank if not exists
-    if (!banks[key].options.includes(newValue)) {
-        handleAddOption(key, newValue);
+    // 解析变量名，获取 baseKey（词库的 key）
+    const parsed = parseVariableName(key);
+    const baseKey = parsed.baseKey;
+    
+    // 1. Add to bank if not exists (使用 baseKey)
+    if (banks[baseKey] && !banks[baseKey].options.includes(newValue)) {
+        handleAddOption(baseKey, newValue);
     }
     
-    // 2. Select it
+    // 2. Select it (使用完整的 key，可能包含 groupId)
     handleSelect(key, index, newValue);
-  }, [banks, handleSelect]);
+  }, [banks, handleSelect, parseVariableName]);
 
   const handleAddOption = React.useCallback((key, newOption) => {
     if (!newOption.trim()) return;
@@ -2024,13 +2382,17 @@ const App = () => {
     const counters = {};
 
     finalString = finalString.replace(/{{(.*?)}}/g, (match, key) => {
-        const k = key.trim();
-        const idx = counters[k] || 0;
-        counters[k] = idx + 1;
+        const fullKey = key.trim();
+        const parsed = parseVariableName(fullKey);
+        const baseKey = parsed.baseKey;
+        
+        // 使用完整的 fullKey 作为计数器的 key
+        const idx = counters[fullKey] || 0;
+        counters[fullKey] = idx + 1;
 
-        const uniqueKey = `${k}-${idx}`;
-        // Prioritize selection, then default, and get localized value
-        const value = activeTemplate.selections[uniqueKey] || defaults[k];
+        const uniqueKey = `${fullKey}-${idx}`;
+        // Prioritize selection, then default (use baseKey for defaults), and get localized value
+        const value = activeTemplate.selections[uniqueKey] || defaults[baseKey];
         return getLocalized(value, templateLanguage) || match;
     });
 
@@ -2449,12 +2811,109 @@ const App = () => {
 
   // --- Renderers ---
 
+  const globalContainerStyle = isDarkMode ? {
+    background: 'linear-gradient(180deg, #3B3B3B 0%, #242120 100%)',
+    borderRadius: '16px',
+    border: '1px solid transparent',
+    backgroundImage: 'linear-gradient(180deg, #3B3B3B, #242120), linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%)',
+    backgroundOrigin: 'border-box',
+    backgroundClip: 'padding-box, border-box',
+  } : {
+    background: 'linear-gradient(180deg, #FAF5F1 0%, #F6EBE6 100%)',
+    borderRadius: '16px',
+    border: '1px solid transparent',
+    backgroundImage: 'linear-gradient(180deg, #FAF5F1, #F6EBE6), linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%)',
+    backgroundOrigin: 'border-box',
+    backgroundClip: 'padding-box, border-box',
+  };
+
   return (
     <div 
-      className="flex flex-col md:flex-row h-screen w-screen bg-gradient-to-br from-[#F3F4F6] to-[#E5E7EB] font-sans text-slate-800 overflow-hidden md:p-4 md:gap-4 relative select-none"
+      className={`flex h-screen w-screen overflow-hidden ${isDarkMode ? '' : 'mesh-gradient-bg md:p-4'}`}
+      style={isDarkMode ? { 
+        background: 'linear-gradient(180deg, #323131 0%, #181716 100%)',
+        padding: isMobileDevice ? '0' : '16px'
+      } : {}}
       onTouchMove={(e) => touchDraggingVar && onTouchDragMove(e.touches[0].clientX, e.touches[0].clientY)}
       onTouchEnd={(e) => touchDraggingVar && onTouchDragEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY)}
     >
+      {/* 桌面端全局侧边栏 - 位置固定不动 */}
+      {!isMobileDevice && (
+        <>
+          <Sidebar 
+            activeTab={isSettingsOpen ? 'settings' : (showDiscoveryOverlay ? 'home' : 'details')}
+            onHome={() => {
+              setIsSettingsOpen(false);
+              handleSetDiscoveryView(true);
+            }}
+            onDetail={() => {
+              setIsSettingsOpen(false);
+              handleSetDiscoveryView(false);
+            }}
+            isSortMenuOpen={isSortMenuOpen}
+            setIsSortMenuOpen={setIsSortMenuOpen}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            setRandomSeed={setRandomSeed}
+            onRefresh={handleRefreshSystemData}
+            onSettings={() => setIsSettingsOpen(true)}
+            language={language}
+            setLanguage={setLanguage}
+            isDarkMode={isDarkMode}
+            setIsDarkMode={setIsDarkMode}
+            t={t}
+          />
+          
+          {/* 趣味设计：暗号模式下拉灯效果 */}
+          <div 
+            className={`hidden md:block fixed top-0 left-[-24px] z-[500] pointer-events-none transition-all duration-700 ease-in-out ${
+              isDarkMode ? 'translate-y-0 opacity-100 delay-0' : '-translate-y-full opacity-0 delay-[300ms]'
+            }`}
+            style={{ width: '220px' }}
+          >
+            {/* 精准感应区：仅 32px 宽，处于灯体中心 */}
+            <div 
+              className="absolute left-[94px] top-0 h-full w-[32px] cursor-pointer pointer-events-auto z-10"
+              onClick={() => setIsLampOn(!isLampOn)}
+              onMouseMove={handleLampMouseMove}
+              onMouseLeave={() => {
+                setLampRotation(0);
+                setIsLampHovered(false);
+              }}
+            />
+            
+            <div 
+              style={{ 
+                transformOrigin: '50% 0',
+                transform: `rotate(${lampRotation}deg)`,
+                transition: isLampHovered ? 'transform 0.1s ease-out' : 'transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+              }}
+            >
+              <img src="/lamp.png" alt="Dark Mode Lamp" className={`w-full h-auto drop-shadow-2xl transition-all duration-500 ${!isLampOn ? 'brightness-50' : 'brightness-100'}`} />
+            </div>
+          </div>
+
+          {/* 趣味设计：光照效果 */}
+          <div 
+            className={`hidden md:block fixed pointer-events-none transition-opacity ease-in-out ${
+              isDarkMode 
+                ? (isLampOn ? 'opacity-[0.28] duration-500 delay-[900ms]' : 'opacity-[0.05] duration-500 delay-0') 
+                : 'opacity-0 duration-300 delay-0'
+            }`}
+            style={{
+              left: '-286px',
+              top: '58px',
+              width: '815px',
+              height: '731px',
+              background: 'linear-gradient(180deg, #FFD09D 5%, rgba(216, 216, 216, 0) 100%)',
+              filter: 'blur(286px)',
+              mixBlendMode: 'lighten',
+              zIndex: 499
+            }}
+          />
+        </>
+      )}
+
       {/* 移动端拖拽浮层 */}
       {touchDraggingVar && (
         <div
@@ -2509,56 +2968,76 @@ const App = () => {
         </div>
       )}
       
-      {/* Discovery View (Full Screen Overlay) */}
-      {showDiscoveryOverlay ? (
-        <div style={{ display: zoomedImage ? 'none' : 'block' }}>
+      {/* 主视图区域 */}
+      <div className="flex-1 relative flex overflow-hidden">
+        {isSettingsOpen && !isMobileDevice ? (
+          <SettingsView
+            language={language}
+            setLanguage={setLanguage}
+            storageMode={storageMode}
+            setStorageMode={setStorageMode}
+            handleImportTemplate={handleImportTemplate}
+            handleExportAllTemplates={handleExportAllTemplates}
+            handleResetSystemData={handleRefreshSystemData}
+            handleClearAllData={handleClearAllData}
+            handleSelectDirectory={handleSelectDirectory}
+            handleSwitchToLocalStorage={handleSwitchToLocalStorage}
+            SYSTEM_DATA_VERSION={SYSTEM_DATA_VERSION}
+            t={t}
+            globalContainerStyle={globalContainerStyle}
+            isDarkMode={isDarkMode}
+          />
+        ) : showDiscoveryOverlay ? (
+          <div style={{ display: zoomedImage ? 'none' : 'block' }}>
           <DiscoveryView
-          filteredTemplates={filteredTemplates}
-          setActiveTemplateId={setActiveTemplateId}
-          setDiscoveryView={handleSetDiscoveryView}
-          setZoomedImage={setZoomedImage}
-          posterScrollRef={posterScrollRef}
-          setIsPosterAutoScrollPaused={setIsPosterAutoScrollPaused}
-          currentMasonryStyle={MASONRY_STYLES[masonryStyleKey]}
-          AnimatedSlogan={isMobileDevice ? MobileAnimatedSlogan : AnimatedSlogan}
-          isSloganActive={!zoomedImage}
-          t={t}
-          TAG_STYLES={TAG_STYLES}
-          displayTag={displayTag}
-          handleRefreshSystemData={handleRefreshSystemData}
-          language={language}
-          setLanguage={setLanguage}
-          setIsSettingsOpen={setIsSettingsOpen}
-          isSortMenuOpen={isSortMenuOpen}
-          setIsSortMenuOpen={setIsSortMenuOpen}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-          setRandomSeed={setRandomSeed}
-          requireAuth={requireAuth}
-          currentUser={currentUser}
-        />
-        </div>
-      ) : (
-        <>
-          <TemplatesSidebar
-            mobileTab={mobileTab}
-            isTemplatesDrawerOpen={isTemplatesDrawerOpen}
-            setIsTemplatesDrawerOpen={setIsTemplatesDrawerOpen}
-            setDiscoveryView={handleSetDiscoveryView}
-            activeTemplateId={activeTemplateId}
-            setActiveTemplateId={setActiveTemplateId}
             filteredTemplates={filteredTemplates}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedTags={selectedTags}
-            setSelectedTags={setSelectedTags}
-            TEMPLATE_TAGS={TEMPLATE_TAGS}
+            setActiveTemplateId={setActiveTemplateId}
+            setDiscoveryView={handleSetDiscoveryView}
+            setZoomedImage={setZoomedImage}
+            posterScrollRef={posterScrollRef}
+            setIsPosterAutoScrollPaused={setIsPosterAutoScrollPaused}
+            currentMasonryStyle={MASONRY_STYLES[masonryStyleKey]}
+            AnimatedSlogan={isMobileDevice ? MobileAnimatedSlogan : AnimatedSlogan}
+            isSloganActive={!zoomedImage}
+            t={t}
+            TAG_STYLES={TAG_STYLES}
             displayTag={displayTag}
             handleRefreshSystemData={handleRefreshSystemData}
             language={language}
             setLanguage={setLanguage}
             setIsSettingsOpen={setIsSettingsOpen}
-            t={t}
+            isDarkMode={isDarkMode}
+            isSortMenuOpen={isSortMenuOpen}
+            setIsSortMenuOpen={setIsSortMenuOpen}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            setRandomSeed={setRandomSeed}
+            globalContainerStyle={globalContainerStyle}
+            requireAuth={requireAuth}
+            currentUser={currentUser}
+          />
+          </div>
+        ) : (
+          <>
+            <TemplatesSidebar
+              mobileTab={mobileTab}
+              isTemplatesDrawerOpen={isTemplatesDrawerOpen}
+              setIsTemplatesDrawerOpen={setIsTemplatesDrawerOpen}
+              setDiscoveryView={handleSetDiscoveryView}
+              activeTemplateId={activeTemplateId}
+              setActiveTemplateId={setActiveTemplateId}
+              filteredTemplates={filteredTemplates}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
+              TEMPLATE_TAGS={TEMPLATE_TAGS}
+            displayTag={displayTag}
+            handleRefreshSystemData={handleRefreshSystemData}
+            language={language}
+            setLanguage={setLanguage}
+            setIsSettingsOpen={setIsSettingsOpen}
+            isDarkMode={isDarkMode}
             isSortMenuOpen={isSortMenuOpen}
             setIsSortMenuOpen={setIsSortMenuOpen}
             sortOrder={sortOrder}
@@ -2580,121 +3059,366 @@ const App = () => {
             setEditingTemplateNameId={setEditingTemplateNameId}
             currentUser={currentUser}
             onLoginClick={() => setIsAuthModalOpen(true)}
+            globalContainerStyle={globalContainerStyle}
           />
+        ) : (
+          <div className="flex-1 flex gap-4 overflow-hidden">
+            <TemplatesSidebar 
+              mobileTab={mobileTab}
+              isTemplatesDrawerOpen={isTemplatesDrawerOpen}
+              setIsTemplatesDrawerOpen={setIsTemplatesDrawerOpen}
+              setDiscoveryView={handleSetDiscoveryView}
+              activeTemplateId={activeTemplateId}
+              setActiveTemplateId={setActiveTemplateId} 
+              filteredTemplates={filteredTemplates}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
+              TEMPLATE_TAGS={TEMPLATE_TAGS}
+              displayTag={displayTag}
+              handleRefreshSystemData={handleRefreshSystemData}
+              language={language}
+              setLanguage={setLanguage}
+              isDarkMode={isDarkMode}
+              setIsSettingsOpen={setIsSettingsOpen}
+              t={t}
+              isSortMenuOpen={isSortMenuOpen}
+              setIsSortMenuOpen={setIsSortMenuOpen}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              setRandomSeed={setRandomSeed}
+              handleResetTemplate={handleResetTemplate}
+              startRenamingTemplate={startRenamingTemplate}
+              handleDuplicateTemplate={handleDuplicateTemplate}
+              handleExportTemplate={handleExportTemplate}
+              handleDeleteTemplate={handleDeleteTemplate}
+              handleAddTemplate={handleAddTemplate}
+              INITIAL_TEMPLATES_CONFIG={INITIAL_TEMPLATES_CONFIG}
+              editingTemplateNameId={editingTemplateNameId}
+              tempTemplateName={tempTemplateName}
+              setTempTemplateName={setTempTemplateName}
+              tempTemplateAuthor={tempTemplateAuthor}
+              setTempTemplateAuthor={setTempTemplateAuthor}
+              saveTemplateName={saveTemplateName}
+              setEditingTemplateNameId={setEditingTemplateNameId}
+              globalContainerStyle={globalContainerStyle}
+            />
 
-      {/* --- 2. Main Editor (Middle) --- */}
-      <div className={`
-          ${(mobileTab === 'editor' || mobileTab === 'settings') ? 'flex fixed inset-0 z-50 bg-white md:static md:bg-white/80' : 'hidden'} 
-          md:flex flex-1 flex-col h-full overflow-hidden relative
-          md:rounded-3xl border border-white/40 shadow-xl
-          origin-left
-      `}>
-          {/* Mobile Side Drawer Triggers */}
-          {isMobileDevice && (
-            <>
-              <div className={`md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ${mobileTab === 'editor' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                <button 
-                  onClick={() => setIsTemplatesDrawerOpen(true)}
-                  className="p-3 bg-white/60 backdrop-blur-md rounded-r-2xl shadow-lg border border-l-0 border-white/40 text-gray-400 active:scale-95 transition-all"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-              <div className={`md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ${mobileTab === 'editor' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                <button 
-                  onClick={() => setIsBanksDrawerOpen(true)}
-                  className="p-3 bg-white/60 backdrop-blur-md rounded-l-2xl shadow-lg border border-r-0 border-white/40 text-gray-400 active:scale-95 transition-all"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-              </div>
-            </>
-          )}
-        
-        {/* 顶部工具栏 */}
-        {(!isMobileDevice || mobileTab !== 'settings') && (
-          <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-100/50 flex justify-between items-center z-20 h-auto min-h-[60px] md:min-h-[72px] bg-white/50 backdrop-blur-sm">
-            <div className="min-w-0 flex-1 mr-2 flex flex-col justify-center">
-              <h1 className="text-base md:text-lg font-bold text-gray-800 truncate">{getLocalized(activeTemplate.name, language)}</h1>
-              
-              {/* 标签和状态栏 */}
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                  {/* 状态指示器 */}
-                  <div className="hidden md:flex items-center gap-1.5 border-r border-gray-200 pr-2 mr-0.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${isEditing ? 'bg-amber-400 animate-pulse' : 'bg-green-400'}`}></span>
-                      <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-                          {isEditing ? t('editing_status') : t('preview_status')}
-                      </p>
-                  </div>
-
-                  {/* Tags */}
-                  {(activeTemplate.tags || []).map(tag => (
-                      <span 
-                          key={tag} 
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium border ${TAG_STYLES[tag] || TAG_STYLES["default"]}`}
+            {/* --- 2. Main Editor (Middle) --- */}
+            <div 
+              style={!isMobileDevice ? globalContainerStyle : {}}
+              className={`
+                ${(mobileTab === 'editor' || mobileTab === 'settings') ? 'flex fixed inset-0 z-50 md:static md:bg-transparent' : 'hidden'} 
+                ${(mobileTab === 'editor' || mobileTab === 'settings') && isMobileDevice ? (isDarkMode ? 'bg-[#242120]' : 'bg-white') : ''}
+                md:flex flex-1 flex-col h-full overflow-hidden relative
+                md:rounded-2xl origin-left
+              `}
+            >
+                <div className={`flex flex-col w-full h-full ${!isMobileDevice ? (isDarkMode ? 'bg-black/20 backdrop-blur-sm rounded-2xl' : 'bg-white/30 backdrop-blur-sm rounded-2xl') : ''}`}>
+                {/* Mobile Side Drawer Triggers */}
+                {isMobileDevice && (
+                  <>
+                    <div className={`md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ${mobileTab === 'editor' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                      <button 
+                        onClick={() => setIsTemplatesDrawerOpen(true)}
+                        className={`p-3 backdrop-blur-md rounded-r-2xl shadow-lg border border-l-0 active:scale-95 transition-all ${isDarkMode ? 'bg-black/40 border-white/5 text-gray-600' : 'bg-white/60 border-white/40 text-gray-400'}`}
                       >
-                          {displayTag(tag)}
-                      </span>
-                  ))}
+                        <ChevronRight size={20} />
+                      </button>
+                    </div>
+                    <div className={`md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ${mobileTab === 'editor' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                      <button 
+                        onClick={() => setIsBanksDrawerOpen(true)}
+                        className={`p-3 backdrop-blur-md rounded-l-2xl shadow-lg border border-r-0 active:scale-95 transition-all ${isDarkMode ? 'bg-black/40 border-white/5 text-gray-600' : 'bg-white/60 border-white/40 text-gray-400'}`}
+                      >
+                        <ChevronLeft size={20} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              
+              {/* 顶部工具栏 */}
+              {(!isMobileDevice || mobileTab !== 'settings') && (
+                <div className={`px-4 md:px-8 py-3 md:py-4 border-b flex justify-between items-center z-20 h-auto min-h-[60px] md:min-h-[72px] ${isDarkMode ? 'border-white/5' : 'border-gray-100/50'}`}>
+                  <div className="min-w-0 flex-1 mr-4 flex items-center gap-6">
+                    <h1 className={`text-xl md:text-2xl font-black truncate tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{getLocalized(activeTemplate.name, language)}</h1>
+                    
+                    {/* Language Toggle */}
+                    {activeTemplate && (() => {
+                      const templateLangs = activeTemplate.language ? (Array.isArray(activeTemplate.language) ? activeTemplate.language : [activeTemplate.language]) : ['cn', 'en'];
+                      const showLanguageToggle = templateLangs.length > 1;
+                      const supportsChinese = templateLangs.includes('cn');
+                      const supportsEnglish = templateLangs.includes('en');
+                      
+                      if (!showLanguageToggle) return null;
+
+                      return (
+                        <div className={`flex items-center p-1 rounded-xl border shadow-inner shrink-0 ${isDarkMode ? 'bg-black/20 border-white/5' : 'bg-gray-100/80 border-gray-200'}`}>
+                            <button 
+                                onClick={() => supportsChinese && setTemplateLanguage('cn')}
+                                disabled={!supportsChinese}
+                                className={`
+                                    text-[10px] font-black tracking-widest transition-all py-1.5 px-3 rounded-lg
+                                    ${!supportsChinese 
+                                        ? 'text-gray-600 cursor-not-allowed opacity-30' 
+                                        : templateLanguage === 'cn' 
+                                            ? (isDarkMode ? 'bg-white/10 text-orange-400 shadow-lg' : 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5') 
+                                            : (isDarkMode ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50')}
+                                `}
+                            >
+                                CN
+                            </button>
+                            <button 
+                                onClick={() => supportsEnglish && setTemplateLanguage('en')}
+                                disabled={!supportsEnglish}
+                                className={`
+                                    text-[10px] font-black tracking-widest transition-all py-1.5 px-3 rounded-lg
+                                    ${!supportsEnglish 
+                                        ? 'text-gray-600 cursor-not-allowed opacity-30' 
+                                        : templateLanguage === 'en' 
+                                            ? (isDarkMode ? 'bg-white/10 text-orange-400 shadow-lg' : 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5') 
+                                            : (isDarkMode ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50')}
+                                `}
+                            >
+                                EN
+                            </button>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                     
+                     <div className={`flex p-1 rounded-xl border shadow-inner ${isDarkMode ? 'bg-black/20 border-white/5' : 'bg-gray-100/80 border-gray-200'}`}>
+                        <button
+                            onClick={() => setIsEditing(false)}
+                            className={`
+                                p-1.5 md:px-3 md:py-1.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-1.5
+                                ${!isEditing 
+                                    ? (isDarkMode ? 'bg-white/10 text-orange-400 shadow-lg' : 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5') 
+                                    : (isDarkMode ? 'text-gray-600 hover:text-gray-300 hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50')}
+                            `}
+                            title={t('preview_mode')}
+                        >
+                            <Eye size={16} /> <span className="hidden md:inline">{t('preview_mode')}</span>
+                        </button>
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className={`
+                                p-1.5 md:px-3 md:py-1.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-1.5
+                                ${isEditing 
+                                    ? (isDarkMode ? 'bg-white/10 text-orange-400 shadow-lg' : 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5') 
+                                    : (isDarkMode ? 'text-gray-600 hover:text-gray-300 hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50')}
+                            `}
+                            title={t('edit_mode')}
+                        >
+                            <Edit3 size={16} /> <span className="hidden md:inline">{t('edit_mode')}</span>
+                        </button>
+                     </div>
+
+                    <div className={`h-6 w-px mx-1 hidden md:block ${isDarkMode ? 'bg-white/5' : 'bg-gray-200'}`}></div>
+
+                    <PremiumButton 
+                        onClick={handleExportImage} 
+                        disabled={isEditing || isExporting} 
+                        title={isExporting ? t('exporting') : t('export_image')} 
+                        icon={ImageIcon} 
+                        color="orange"
+                        isDarkMode={isDarkMode}
+                    >
+                        <span className="hidden sm:inline">{isExporting ? t('exporting') : t('export_image')}</span>
+                    </PremiumButton>
+                    <PremiumButton 
+                        onClick={handleCopy} 
+                        title={copied ? t('copied') : t('copy_result')} 
+                        icon={copied ? Check : CopyIcon} 
+                        color={copied ? "emerald" : "orange"}
+                        active={true} // Always active look for CTA
+                        isDarkMode={isDarkMode}
+                        className="transition-all duration-300 transform hover:-translate-y-0.5"
+                    >
+                         <span className="hidden md:inline ml-1">{copied ? t('copied') : t('copy_result')}</span>
+                    </PremiumButton>
+                  </div>
+                </div>
+              )}
+
+              {/* 核心内容区 */}
+              <div className={`flex-1 overflow-hidden relative pb-24 md:pb-0 flex flex-col ${mobileTab === 'settings' ? 'pt-0' : ''}`}>
+                  {mobileTab === 'settings' ? (
+                      <div className={`flex-1 flex flex-col overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-[#181716]' : 'bg-white'}`}>
+                          <MobileSettingsView 
+                              language={language}
+                              setLanguage={setLanguage}
+                              storageMode={storageMode}
+                              setStorageMode={setStorageMode}
+                              handleImportTemplate={handleImportTemplate}
+                              handleExportAllTemplates={handleExportAllTemplates}
+                              handleCompleteBackup={handleCompleteBackup}
+                              handleImportAllData={handleImportAllData}
+                              handleResetSystemData={handleRefreshSystemData}
+                              handleClearAllData={handleClearAllData}
+                              SYSTEM_DATA_VERSION={SYSTEM_DATA_VERSION}
+                              t={t}
+                              isDarkMode={isDarkMode}
+                          />
+                      </div>
+                  ) : (
+                    <>
+                      {isEditing && (
+                          <div className={`backdrop-blur-sm ${isDarkMode ? 'bg-black/20' : 'bg-white/30'}`}>
+                            <EditorToolbar 
+                                onInsertClick={() => setIsInsertModalOpen(true)}
+                                canUndo={historyPast.length > 0}
+                                canRedo={historyFuture.length > 0}
+                                onUndo={handleUndo}
+                                onRedo={handleRedo}
+                                t={t}
+                                isDarkMode={isDarkMode}
+                                cursorInVariable={cursorInVariable}
+                                currentGroupId={currentGroupId}
+                                onSetGroup={handleSetGroup}
+                                onRemoveGroup={handleRemoveGroup}
+                            />
+                          </div>
+                      )}
+                      
+                      {isEditing ? (
+                          <div className="flex-1 relative overflow-hidden">
+                              <VisualEditor
+                                  ref={textareaRef}
+                                  value={getLocalized(activeTemplate.content, templateLanguage)}
+                                  onChange={(e) => {
+                                      const newText = e.target.value;
+                                      if (typeof activeTemplate.content === 'object') {
+                                          updateActiveTemplateContent({
+                                              ...activeTemplate.content,
+                                              [templateLanguage]: newText
+                                          });
+                                      } else {
+                                          updateActiveTemplateContent(newText);
+                                      }
+                                  }}
+                                  banks={banks}
+                                  categories={categories}
+                                  isDarkMode={isDarkMode}
+                              />
+                          </div>
+                      ) : (
+                          <TemplatePreview 
+                              activeTemplate={activeTemplate}
+                              banks={banks}
+                              defaults={defaults}
+                              categories={categories}
+                              activePopover={activePopover}
+                              setActivePopover={setActivePopover}
+                              handleSelect={handleSelect}
+                              handleAddCustomAndSelect={handleAddCustomAndSelect}
+                              popoverRef={popoverRef}
+                              t={t}
+                              displayTag={displayTag}
+                              TAG_STYLES={TAG_STYLES}
+                              setZoomedImage={setZoomedImage}
+                              fileInputRef={fileInputRef}
+                              setShowImageUrlInput={setShowImageUrlInput}
+                              handleResetImage={handleResetImage}
+                              language={templateLanguage}
+                              setLanguage={setTemplateLanguage}
+                              // 标签编辑相关
+                              TEMPLATE_TAGS={TEMPLATE_TAGS}
+                              handleUpdateTemplateTags={handleUpdateTemplateTags}
+                              editingTemplateTags={editingTemplateTags}
+                              setEditingTemplateTags={setEditingTemplateTags}
+                              // 多图编辑相关
+                              setImageUpdateMode={setImageUpdateMode}
+                              setCurrentImageEditIndex={setCurrentImageEditIndex}
+                              // 标题编辑相关
+                              editingTemplateNameId={editingTemplateNameId}
+                              tempTemplateName={tempTemplateName}
+                              setTempTemplateName={setTempTemplateName}
+                              saveTemplateName={saveTemplateName}
+                              startRenamingTemplate={startRenamingTemplate}
+                              setEditingTemplateNameId={setEditingTemplateNameId}
+                              globalContainerStyle={globalContainerStyle}
+                              isDarkMode={isDarkMode}
+                          />
+                      )}
+                    </>
+                  )}
+                           
+                           {/* Image URL Input Modal */}
+                           {showImageUrlInput && (
+                               <div 
+                                   className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                                   onClick={() => { setShowImageUrlInput(false); setImageUrlInput(""); }}
+                               >
+                                   <div 
+                                       className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full"
+                                       onClick={(e) => e.stopPropagation()}
+                                   >
+                                       <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                           <Globe size={20} className="text-blue-500" />
+                                           {t('image_url')}
+                                       </h3>
+                                       <input
+                                           autoFocus
+                                           type="text"
+                                           value={imageUrlInput}
+                                           onChange={(e) => setImageUrlInput(e.target.value)}
+                                           placeholder={t('image_url_placeholder')}
+                                           className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           onKeyDown={(e) => e.key === 'Enter' && handleSetImageUrl()}
+                                       />
+                                       <div className="flex gap-3">
+                                           <button
+                                               onClick={handleSetImageUrl}
+                                               disabled={!imageUrlInput.trim()}
+                                               className="flex-1 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                           >
+                                               {t('use_url')}
+                                           </button>
+                                           <button
+                                               onClick={() => { setShowImageUrlInput(false); setImageUrlInput(""); }}
+                                               className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-all"
+                                           >
+                                               {t('cancel')}
+                                           </button>
+                                       </div>
+                                   </div>
+                               </div>
+                           )}
               </div>
             </div>
-            
-            <div className="flex items-center gap-2 md:gap-3 self-start md:self-center">
-               
-               <div className="flex bg-gray-100/80 p-1 rounded-xl border border-gray-200 shadow-inner">
-                  <button
-                      onClick={() => setIsEditing(false)}
-                      className={`
-                          p-1.5 md:px-3 md:py-1.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-1.5
-                          ${!isEditing 
-                              ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5' 
-                              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
-                      `}
-                      title={t('preview_mode')}
-                  >
-                      <Eye size={16} /> <span className="hidden md:inline">{t('preview_mode')}</span>
-                  </button>
-                  <button
-                      onClick={() => setIsEditing(true)}
-                      className={`
-                          p-1.5 md:px-3 md:py-1.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-1.5
-                          ${isEditing 
-                              ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5' 
-                              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}
-                      `}
-                      title={t('edit_mode')}
-                  >
-                      <Edit3 size={16} /> <span className="hidden md:inline">{t('edit_mode')}</span>
-                  </button>
-               </div>
+          </div>
 
-              <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block"></div>
-
-              <PremiumButton 
-                  onClick={handleExportImage} 
-                  disabled={isEditing || isExporting} 
-                  title={isExporting ? t('exporting') : t('export_image')} 
-                  icon={ImageIcon} 
-                  color="orange"
-              >
-                  <span className="hidden sm:inline">{isExporting ? t('exporting') : t('export_image')}</span>
-              </PremiumButton>
-              <PremiumButton 
-                  onClick={handleCopy} 
-                  title={copied ? t('copied') : t('copy_result')} 
-                  icon={copied ? Check : CopyIcon} 
-                  color={copied ? "emerald" : "orange"}
-                  active={true} // Always active look for CTA
-                  className="transition-all duration-300 transform hover:-translate-y-0.5"
-              >
-                   <span className="hidden md:inline ml-1">{copied ? t('copied') : t('copy_result')}</span>
-              </PremiumButton>
-            </div>
+            <BanksSidebar 
+              mobileTab={mobileTab}
+              isBanksDrawerOpen={isBanksDrawerOpen}
+              setIsBanksDrawerOpen={setIsBanksDrawerOpen}
+              bankSidebarWidth={bankSidebarWidth}
+              sidebarRef={sidebarRef}
+              startResizing={startResizing}
+              setIsCategoryManagerOpen={setIsCategoryManagerOpen}
+              categories={categories}
+              banks={banks}
+              insertVariableToTemplate={insertVariableToTemplate}
+              handleDeleteOption={handleDeleteOption}
+              handleAddOption={handleAddOption}
+              handleDeleteBank={handleDeleteBank}
+              handleUpdateBankCategory={handleUpdateBankCategory}
+              handleStartAddBank={handleStartAddBank}
+              t={t}
+              language={templateLanguage}
+              isDarkMode={isDarkMode}
+              onTouchDragStart={onTouchDragStart}
+              globalContainerStyle={globalContainerStyle}
+            />
           </div>
         )}
 
         {/* 核心内容区 */}
-        <div className={`flex-1 overflow-hidden relative pb-24 md:pb-0 flex flex-col bg-gradient-to-br from-white/60 to-gray-50/60 ${mobileTab === 'settings' ? 'pt-0' : ''}`}>
+        <div className={`flex-1 overflow-hidden relative pb-24 md:pb-0 flex flex-col bg-gradient-to-br from-white/60 to-gray-50/60 ${mobileTab === 'settings' ? 'pt-0' : ''} ${isDarkMode ? 'dark:from-gray-800/60 dark:to-gray-900/60' : ''}`}>
             {mobileTab === 'settings' ? (
                 <div className="flex-1 flex flex-col overflow-hidden bg-white">
                     <MobileSettingsView
@@ -2713,21 +3437,24 @@ const App = () => {
                         currentUser={currentUser}
                         onLoginClick={() => setIsAuthModalOpen(true)}
                         onLogout={handleLogout}
+                        isDarkMode={isDarkMode}
+                        setIsDarkMode={setIsDarkMode}
                     />
                 </div>
             ) : (
               <>
                 {isEditing && (
-                    <EditorToolbar 
+                    <EditorToolbar
                         onInsertClick={() => setIsInsertModalOpen(true)}
                         canUndo={historyPast.length > 0}
                         canRedo={historyFuture.length > 0}
                         onUndo={handleUndo}
                         onRedo={handleRedo}
                         t={t}
+                        isDarkMode={isDarkMode}
                     />
                 )}
-                
+
                 {isEditing ? (
                     <div className="flex-1 relative overflow-hidden flex flex-col">
                         <VisualEditor
@@ -2746,9 +3473,10 @@ const App = () => {
                             }}
                             banks={banks}
                             categories={categories}
+                            isDarkMode={isDarkMode}
                         />
                         {/* 完成编辑按钮 */}
-                        <div className="flex-shrink-0 p-4 bg-gradient-to-t from-white via-white to-transparent border-t border-gray-100">
+                        <div className={`flex-shrink-0 p-4 bg-gradient-to-t ${isDarkMode ? 'from-gray-800 via-gray-800 to-transparent border-gray-700' : 'from-white via-white to-transparent border-gray-100'} border-t`}>
                             <button
                                 onClick={handleFinishEditing}
                                 className="w-full py-3 px-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-xl shadow-lg shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
@@ -2797,22 +3525,23 @@ const App = () => {
                         handleSubmitTemplate={handleSubmitTemplate}
                         isSubmitting={isSubmitting}
                         currentUser={currentUser}
+                        isDarkMode={isDarkMode}
                     />
                 )}
               </>
             )}
-                     
+
                      {/* Image URL Input Modal */}
                      {showImageUrlInput && (
-                         <div 
+                         <div
                              className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
                              onClick={() => { setShowImageUrlInput(false); setImageUrlInput(""); }}
                          >
-                             <div 
-                                 className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full"
+                             <div
+                                 className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-2xl p-6 max-w-md w-full`}
                                  onClick={(e) => e.stopPropagation()}
                              >
-                                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                 <h3 className={`text-lg font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4 flex items-center gap-2`}>
                                      <Globe size={20} className="text-blue-500" />
                                      {t('image_url')}
                                  </h3>
@@ -2822,7 +3551,7 @@ const App = () => {
                                      value={imageUrlInput}
                                      onChange={(e) => setImageUrlInput(e.target.value)}
                                      placeholder={t('image_url_placeholder')}
-                                     className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                     className={`w-full px-4 py-3 text-sm border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-100' : 'border-gray-300 bg-white text-gray-800'} rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                                      onKeyDown={(e) => e.key === 'Enter' && handleSetImageUrl()}
                                  />
                                  <div className="flex gap-3">
@@ -2835,7 +3564,7 @@ const App = () => {
                                      </button>
                                      <button
                                          onClick={() => { setShowImageUrlInput(false); setImageUrlInput(""); }}
-                                         className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-all"
+                                         className={`flex-1 px-4 py-2.5 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} text-sm font-medium rounded-lg transition-all`}
                                      >
                                          {t('cancel')}
                                      </button>
@@ -2845,30 +3574,6 @@ const App = () => {
                      )}
         </div>
       </div>
-
-          <BanksSidebar 
-            mobileTab={mobileTab}
-            isBanksDrawerOpen={isBanksDrawerOpen}
-            setIsBanksDrawerOpen={setIsBanksDrawerOpen}
-            bankSidebarWidth={bankSidebarWidth}
-            sidebarRef={sidebarRef}
-            startResizing={startResizing}
-            setIsCategoryManagerOpen={setIsCategoryManagerOpen}
-            categories={categories}
-            banks={banks}
-            insertVariableToTemplate={insertVariableToTemplate}
-            handleDeleteOption={handleDeleteOption}
-            handleAddOption={handleAddOption}
-            handleDeleteBank={handleDeleteBank}
-            handleUpdateBankCategory={handleUpdateBankCategory}
-            handleStartAddBank={handleStartAddBank}
-            t={t}
-            language={templateLanguage}
-            onTouchDragStart={onTouchDragStart}
-          />
-        </>
-      )}
-
       {/* --- Add Bank Modal --- */}
       <AddBankModal
         isOpen={isAddingBank}
@@ -2882,6 +3587,7 @@ const App = () => {
         newBankCategory={newBankCategory}
         setNewBankCategory={setNewBankCategory}
         onConfirm={handleAddBank}
+        isDarkMode={isDarkMode}
       />
 
       {/* 隐藏的图片选择器 */}
@@ -2893,8 +3599,8 @@ const App = () => {
         onChange={handleUploadImage}
       />
 
-      {/* --- Settings Modal - Enhanced UI --- */}
-      {isSettingsOpen && (
+      {/* --- Settings Modal - Enhanced UI (Legacy/Mobile) --- */}
+      {isSettingsOpen && isMobileDevice && (
         <div 
           className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-200"
           onClick={() => setIsSettingsOpen(false)}
@@ -3132,6 +3838,7 @@ const App = () => {
                    templates.find(t => t.imageUrl === zoomedImage || t.imageUrls?.includes(zoomedImage)) ||
                    (activeTemplate.imageUrl === zoomedImage || activeTemplate.imageUrls?.includes(zoomedImage) ? activeTemplate : null)}
           language={language}
+          setLanguage={setLanguage}
           t={t}
           TAG_STYLES={TAG_STYLES}
           displayTag={displayTag}
@@ -3140,11 +3847,14 @@ const App = () => {
           setZoomedImage={setZoomedImage}
           setMobileTab={setMobileTab}
           requireAuth={requireAuth}
+          handleRefreshSystemData={handleRefreshSystemData}
+          setIsSettingsOpen={setIsSettingsOpen}
+          isDarkMode={isDarkMode}
         />
       )}
 
-      {/* --- Mobile Bottom Navigation - 3 Tabs --- */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/25 backdrop-blur-2xl border-t border-white/30 flex justify-around items-center z-[250] h-16 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
+      {/* --- Mobile Bottom Navigation - 4 Tabs --- */}
+      <div className={`md:hidden fixed bottom-0 left-0 right-0 backdrop-blur-2xl border-t flex justify-around items-center z-[250] h-16 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)] transition-colors duration-300 ${isDarkMode ? 'bg-[#181716]/25 border-white/5' : 'bg-white/25 border-white/30'}`}>
           {/* 主页 */}
           <button 
              onClick={() => {
@@ -3154,11 +3864,25 @@ const App = () => {
                setIsTemplatesDrawerOpen(false);
                setIsBanksDrawerOpen(false);
              }}
-             className={`flex flex-col items-center justify-center w-full h-full transition-all active:scale-90 ${mobileTab === 'home' ? 'text-orange-600' : 'text-gray-700'}`}
-             style={{ filter: 'drop-shadow(1px 1px 0px rgba(255,255,255,0.3))' }}
+             className="flex flex-col items-center justify-center w-full h-full transition-all active:scale-90 group"
           >
-             <div className={`p-2 rounded-xl transition-all ${mobileTab === 'home' ? 'bg-orange-50/50' : ''}`}>
-                <LayoutGrid size={22} />
+             <div className={`p-2 rounded-xl transition-all ${mobileTab === 'home' ? (isDarkMode ? 'bg-white/5' : 'bg-orange-50/50') : ''}`}>
+                <div 
+                  style={{ 
+                    width: '24px', 
+                    height: '24px', 
+                    backgroundColor: mobileTab === 'home' ? '#EA580C' : (isDarkMode ? '#8E9196' : '#6B7280'),
+                    WebkitMaskImage: 'url(/home.svg)',
+                    maskImage: 'url(/home.svg)',
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskPosition: 'center',
+                    maskPosition: 'center',
+                    WebkitMaskSize: 'contain',
+                    maskSize: 'contain',
+                    filter: isDarkMode ? 'none' : 'drop-shadow(1px 1px 0px rgba(255,255,255,0.3))'
+                  }}
+                />
              </div>
           </button>
           
@@ -3177,11 +3901,25 @@ const App = () => {
                }
                setMobileTab('editor');
              }}
-             className={`flex flex-col items-center justify-center w-full h-full transition-all active:scale-90 ${mobileTab === 'editor' ? 'text-orange-600' : 'text-gray-700'}`}
-             style={{ filter: 'drop-shadow(1px 1px 0px rgba(255,255,255,0.3))' }}
+             className="flex flex-col items-center justify-center w-full h-full transition-all active:scale-90 group"
           >
-             <div className={`p-2 rounded-xl transition-all ${mobileTab === 'editor' ? 'bg-orange-50/50' : ''}`}>
-                <Edit3 size={22} />
+             <div className={`p-2 rounded-xl transition-all ${mobileTab === 'editor' ? (isDarkMode ? 'bg-white/5' : 'bg-orange-50/50') : ''}`}>
+                <div 
+                  style={{ 
+                    width: '24px', 
+                    height: '24px', 
+                    backgroundColor: mobileTab === 'editor' ? '#EA580C' : (isDarkMode ? '#8E9196' : '#6B7280'),
+                    WebkitMaskImage: 'url(/list.svg)',
+                    maskImage: 'url(/list.svg)',
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskPosition: 'center',
+                    maskPosition: 'center',
+                    WebkitMaskSize: 'contain',
+                    maskSize: 'contain',
+                    filter: isDarkMode ? 'none' : 'drop-shadow(1px 1px 0px rgba(255,255,255,0.3))'
+                  }}
+                />
              </div>
           </button>
           
@@ -3195,11 +3933,37 @@ const App = () => {
                setIsTemplatesDrawerOpen(false);
                setIsBanksDrawerOpen(false);
              }}
-             className={`flex flex-col items-center justify-center w-full h-full transition-all active:scale-90 ${mobileTab === 'settings' ? 'text-orange-600' : 'text-gray-700'}`}
-             style={{ filter: 'drop-shadow(1px 1px 0px rgba(255,255,255,0.3))' }}
+             className="flex flex-col items-center justify-center w-full h-full transition-all active:scale-90 group"
           >
-             <div className={`p-2 rounded-xl transition-all ${mobileTab === 'settings' ? 'bg-orange-50/50' : ''}`}>
-                <Settings size={22} />
+             <div className={`p-2 rounded-xl transition-all ${mobileTab === 'settings' ? (isDarkMode ? 'bg-white/5' : 'bg-orange-50/50') : ''}`}>
+                <div 
+                  style={{ 
+                    width: '24px', 
+                    height: '24px', 
+                    backgroundColor: mobileTab === 'settings' ? '#EA580C' : (isDarkMode ? '#8E9196' : '#6B7280'),
+                    WebkitMaskImage: 'url(/setting.svg)',
+                    maskImage: 'url(/setting.svg)',
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskRepeat: 'no-repeat',
+                    WebkitMaskPosition: 'center',
+                    maskPosition: 'center',
+                    WebkitMaskSize: 'contain',
+                    maskSize: 'contain',
+                    filter: isDarkMode ? 'none' : 'drop-shadow(1px 1px 0px rgba(255,255,255,0.3))'
+                  }}
+                />
+             </div>
+          </button>
+
+          {/* 暗色模式切换 */}
+          <button 
+             onClick={() => setIsDarkMode(!isDarkMode)}
+             className="flex flex-col items-center justify-center w-full h-full transition-all active:scale-90 group"
+          >
+             <div className="p-2 rounded-xl transition-all">
+                <div className={`${isDarkMode ? 'text-[#8E9196]' : 'text-[#6B7280]'} transition-colors`}>
+                   {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
+                </div>
              </div>
           </button>
       </div>
@@ -3213,6 +3977,7 @@ const App = () => {
         banks={banks}
         setBanks={setBanks}
         t={t}
+        isDarkMode={isDarkMode}
       />
 
       {/* --- Insert Variable Modal (Moved to bottom) --- */}
@@ -3226,6 +3991,7 @@ const App = () => {
             setIsInsertModalOpen(false);
         }}
         t={t}
+        isDarkMode={isDarkMode}
       />
 
       {/* --- 应用刷新提示 (应用版本更新) --- */}

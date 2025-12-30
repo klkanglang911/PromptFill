@@ -16,7 +16,9 @@ export const Variable = ({
   popoverRef, 
   categories, 
   t,
-  language
+  language,
+  isDarkMode,
+  groupId = null  // 新增：分组ID，用于显示分组标识
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [customVal, setCustomVal] = useState("");
@@ -40,7 +42,7 @@ export const Variable = ({
     return (
       <span 
         data-export-pill="true"
-        className="text-gray-400 bg-gray-50 px-1 rounded border border-gray-200 text-xs" 
+        className={`px-1 rounded border text-xs ${isDarkMode ? 'text-gray-600 bg-white/5 border-white/5' : 'text-gray-400 bg-gray-50 border-gray-200'}`} 
         title={`${t('undefined_var')}: ${id}`}
       >
         [{id}?]
@@ -78,8 +80,8 @@ export const Variable = ({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`
-          cursor-pointer px-3 py-1 rounded-full transition-all duration-300 select-none font-medium text-white
-          ${isOpen ? `ring-2 ring-offset-2 ${style.ring}` : ''}
+          relative cursor-pointer px-3 py-1 rounded-full transition-all duration-300 select-none font-medium text-white
+          ${isOpen ? (isDarkMode ? `ring-2 ring-orange-500/50 ring-offset-2 ring-offset-[#242120]` : `ring-2 ring-offset-2 ${style.ring}`) : ''}
           hover:scale-105 active:scale-95
         `}
         style={{
@@ -92,6 +94,20 @@ export const Variable = ({
         }}
       >
         {getLocalized(currentVal, language) || <span className="opacity-70 italic">{t('please_select')}</span>}
+        
+        {/* 分组标识 - 右上角显示 groupId */}
+        {groupId && (
+          <span 
+            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-white shadow-lg border-2 border-white"
+            style={{
+              background: `linear-gradient(135deg, ${premium.from}, ${premium.to})`,
+              boxShadow: `0 2px 6px ${premium.shadowColor}, 0 0 0 2px rgba(255, 255, 255, 0.3)`
+            }}
+            title={`联动组 ${groupId}`}
+          >
+            {groupId}
+          </span>
+        )}
       </span>
       
       {/* Popover - 词库选择器 */}
@@ -102,13 +118,15 @@ export const Variable = ({
           style={{ 
             minWidth: '280px',
             backdropFilter: 'blur(20px)',
-            backgroundColor: 'rgba(255, 255, 255, 0.85)',
-            border: '1px solid rgba(255, 255, 255, 0.5)',
-            boxShadow: `0 10px 40px -10px ${premium.shadowColor}, 0 0 0 1px rgba(0,0,0,0.05)`
+            backgroundColor: isDarkMode ? 'rgba(36, 33, 32, 0.95)' : 'rgba(255, 255, 255, 0.85)',
+            border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(255, 255, 255, 0.5)',
+            boxShadow: isDarkMode 
+              ? `0 10px 40px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)`
+              : `0 10px 40px -10px ${premium.shadowColor}, 0 0 0 1px rgba(0,0,0,0.05)`
           }}
         >
-          <div className="px-4 py-3 border-b border-gray-100/50 flex justify-between items-center bg-white/50 backdrop-blur-sm">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+          <div className={`px-4 py-3 border-b flex justify-between items-center backdrop-blur-sm ${isDarkMode ? 'border-white/5 bg-black/20' : 'border-gray-100/50 bg-white/50'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
               {t('select')} {getLocalized(config.label, language)}
             </span>
             <span 
@@ -126,8 +144,8 @@ export const Variable = ({
                 onClick={() => onSelect(opt)}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group flex items-center justify-between
                   ${isSelected(opt) 
-                    ? 'bg-white shadow-md ring-1 ring-black/5 font-bold' 
-                    : 'hover:bg-white/60 hover:shadow-sm text-gray-600 hover:text-gray-900'}`}
+                    ? (isDarkMode ? 'bg-orange-500/10 shadow-lg font-bold' : 'bg-white shadow-md ring-1 ring-black/5 font-bold') 
+                    : (isDarkMode ? 'hover:bg-white/5 text-gray-400 hover:text-white' : 'hover:bg-white/60 hover:shadow-sm text-gray-600 hover:text-gray-900')}`}
                 style={isSelected(opt) ? { color: premium.to } : {}}
               >
                 <span>{getLocalized(opt, language)}</span>
@@ -141,7 +159,7 @@ export const Variable = ({
           </div>
           
           {/* Add Custom Option Footer */}
-          <div className="p-2 border-t border-gray-100/50 bg-white/50 backdrop-blur-sm">
+          <div className={`p-2 border-t backdrop-blur-sm ${isDarkMode ? 'border-white/5 bg-black/20' : 'border-gray-100/50 bg-white/50'}`}>
             {isAdding ? (
               <div className="flex gap-2">
                 <input 
@@ -150,13 +168,13 @@ export const Variable = ({
                   value={customVal}
                   onChange={(e) => setCustomVal(e.target.value)}
                   placeholder={t('add_option_placeholder')}
-                  className="flex-1 min-w-0 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white/80"
+                  className={`flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all ${isDarkMode ? 'bg-white/5 border-white/10 text-white' : 'border-gray-200 bg-white/80'}`}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddSubmit()}
                 />
                 <button 
                   onClick={handleAddSubmit}
                   disabled={!customVal.trim()}
-                  className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors shadow-sm"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50 transition-colors shadow-sm ${isDarkMode ? 'bg-orange-600 text-white hover:bg-orange-700' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
                 >
                   {t('confirm')}
                 </button>
@@ -167,7 +185,7 @@ export const Variable = ({
                   e.stopPropagation();
                   setIsAdding(true);
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs text-gray-500 hover:text-orange-600 hover:bg-orange-50/50 rounded-lg border border-dashed border-gray-300 hover:border-orange-300 transition-all font-medium"
+                className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs transition-all font-medium rounded-lg border border-dashed ${isDarkMode ? 'text-gray-500 hover:text-orange-400 hover:bg-white/5 border-white/10 hover:border-orange-500/50' : 'text-gray-500 hover:text-orange-600 hover:bg-orange-50/50 border-gray-300 hover:border-orange-300'}`}
               >
                 <Plus size={12} /> {t('add_custom_option')}
               </button>

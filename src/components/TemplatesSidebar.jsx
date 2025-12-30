@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutGrid, FileText, Search, RotateCcw, Globe, Settings,
   ChevronRight, ChevronDown, ImageIcon, ArrowUpRight, Plus,
-  Pencil, Copy as CopyIcon, Download, ArrowUpDown, Home, User
+  Pencil, Copy as CopyIcon, Download, ArrowUpDown, Home, User, Trash2
 } from 'lucide-react';
 import { PremiumButton } from './PremiumButton';
 import { getLocalized } from '../utils/helpers';
@@ -49,7 +49,9 @@ export const TemplatesSidebar = React.memo(({
   saveTemplateName,
   setEditingTemplateNameId,
   currentUser,
-  onLoginClick
+  onLoginClick,
+  globalContainerStyle,
+  isDarkMode
 }) => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -64,49 +66,51 @@ export const TemplatesSidebar = React.memo(({
       )}
 
       <div 
+        style={!isMobile ? globalContainerStyle : {}}
         className={`
         ${isMobile 
           ? `fixed inset-y-0 left-0 z-[300] w-[75%] max-w-[320px] transform transition-transform duration-500 ease-out shadow-2xl ${isTemplatesDrawerOpen ? 'translate-x-0' : '-translate-x-full'}`
-          : 'relative md:flex flex-col flex-shrink-0 h-full w-[380px] border-r border-gray-200'
+          : 'relative md:flex flex-col flex-shrink-0 h-full w-[340px] overflow-hidden'
         } 
-        flex bg-white overflow-hidden
+        flex overflow-hidden
+        ${!isMobile ? 'bg-transparent' : (isDarkMode ? 'bg-[#242120]' : 'bg-white')}
         ${!isMobile && mobileTab !== 'editor' && mobileTab !== 'banks' ? 'hidden md:flex' : ''}
       `}
       >
-        <div className="flex flex-col w-full h-full">
+        <div className={`flex flex-col w-full h-full ${isMobile ? (isDarkMode ? 'bg-[#242120]' : 'bg-white') : 'bg-transparent'} backdrop-blur-sm rounded-2xl`}>
           {/* --- Sidebar Header with Tools --- */}
-      <div className="flex-shrink-0 p-5 border-b border-gray-200 bg-white">
-         <div className="flex items-center justify-between mb-3">
-             <div className="flex flex-row items-baseline gap-2">
-                  <h1 className="font-bold tracking-tight text-sm text-orange-500">
+      <div className="flex-shrink-0 p-6">
+         <div className="flex items-center justify-between mb-6">
+             <div className="flex flex-col items-start gap-1">
+                  <h1 className={`${isMobile ? 'text-[18px]' : 'text-[22px]'} font-black tracking-tight text-orange-500 flex items-baseline gap-2`}>
                       提示词填空器
-                      <span className="text-gray-400 text-xs font-normal ml-1">V0.5.1</span>
+                      <span className={`${isDarkMode ? 'text-gray-600' : 'text-gray-400'} text-xs font-bold tracking-widest`}>V0.6.0</span>
                   </h1>
              </div>
              
              <div className="flex items-center gap-1.5">
                   {/* Discovery View Toggle (Home button) */}
-                  <button 
-                    onClick={() => setDiscoveryView(true)} 
-                    className="p-1.5 rounded-lg transition-all text-orange-500 bg-orange-50/50 hover:text-orange-600 hover:bg-orange-100 shadow-sm" 
+                  <button
+                    onClick={() => setDiscoveryView(true)}
+                    className={`p-1.5 rounded-lg transition-all shadow-sm ${isDarkMode ? 'text-orange-400 bg-orange-500/10 hover:text-orange-300 hover:bg-orange-500/20' : 'text-orange-500 bg-orange-50/50 hover:text-orange-600 hover:bg-orange-100'}`}
                     title={t('back_to_discovery')}
                   >
                     <Home size={18} />
                   </button>
 
-                  <button onClick={handleRefreshSystemData} className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-orange-600 hover:bg-orange-50" title={t('refresh_desc')}><RotateCcw size={16} /></button>
-                  
+                  <button onClick={handleRefreshSystemData} className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'text-gray-500 hover:text-orange-400 hover:bg-white/5' : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'}`} title={t('refresh_desc')}><RotateCcw size={16} /></button>
+
                   {/* Sort Menu Button */}
                   <div className="relative">
-                    <button 
-                      onClick={() => setIsSortMenuOpen(!isSortMenuOpen)} 
-                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-orange-600 hover:bg-orange-50" 
+                    <button
+                      onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                      className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'text-gray-500 hover:text-orange-400 hover:bg-white/5' : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'}`}
                       title={t('sort')}
                     >
                       <ArrowUpDown size={16} />
                     </button>
                     {isSortMenuOpen && (
-                      <div className="absolute top-full mt-2 right-0 bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[140px] z-[100]">
+                      <div className={`absolute top-full mt-2 right-0 rounded-xl shadow-xl border py-2 min-w-[140px] z-[100] ${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white border-gray-100'}`}>
                         {[
                           { value: 'newest', label: t('sort_newest') },
                           { value: 'oldest', label: t('sort_oldest') },
@@ -121,7 +125,7 @@ export const TemplatesSidebar = React.memo(({
                               if (option.value === 'random') setRandomSeed(Date.now());
                               setIsSortMenuOpen(false);
                             }}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-orange-50 transition-colors ${sortOrder === option.value ? 'text-orange-600 font-semibold' : 'text-gray-700'}`}
+                            className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortOrder === option.value ? 'text-orange-600 font-semibold' : (isDarkMode ? 'text-gray-300' : 'text-gray-700')} ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-orange-50'}`}
                           >
                             {option.label}
                           </button>
@@ -130,7 +134,7 @@ export const TemplatesSidebar = React.memo(({
                     )}
                   </div>
 
-                  <button onClick={() => setLanguage(language === 'cn' ? 'en' : 'cn')} className="text-[10px] px-2 py-1 rounded-full border transition-colors flex items-center gap-1 shadow-sm bg-transparent text-gray-400 border-gray-200 hover:text-orange-600 hover:bg-orange-50"><Globe size={10} />{language.toUpperCase()}</button>
+                  <button onClick={() => setLanguage(language === 'cn' ? 'en' : 'cn')} className={`text-[10px] px-2 py-1 rounded-full border transition-colors flex items-center gap-1 shadow-sm ${isDarkMode ? 'bg-transparent text-gray-500 border-gray-700 hover:text-orange-400 hover:bg-white/5' : 'bg-transparent text-gray-400 border-gray-200 hover:text-orange-600 hover:bg-orange-50'}`}><Globe size={10} />{language.toUpperCase()}</button>
 
                   {/* 用户按钮 */}
                   {currentUser ? (
@@ -144,32 +148,75 @@ export const TemplatesSidebar = React.memo(({
                   ) : (
                     <button
                       onClick={onLoginClick}
-                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-orange-600 hover:bg-orange-50"
+                      className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'text-gray-500 hover:text-orange-400 hover:bg-white/5' : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'}`}
                       title={language === 'cn' ? '登录' : 'Sign In'}
                     >
                       <User size={16} />
                     </button>
                   )}
 
-                  <button onClick={() => setIsSettingsOpen(true)} className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-orange-600 hover:bg-orange-50" title={t('settings')}><Settings size={16} /></button>
+                  <button onClick={() => setIsSettingsOpen(true)} className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'text-gray-500 hover:text-orange-400 hover:bg-white/5' : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'}`} title={t('settings')}><Settings size={16} /></button>
              </div>
          </div>
 
-         <div className="flex flex-col gap-3">
+         <div className="flex flex-col gap-4">
+            {/* 极简搜索框 */}
             <div className="relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" size={14} />
-                <input type="text" placeholder={t('search_templates')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-gray-100 border-none rounded-xl text-xs focus:ring-2 focus:ring-orange-500/20 transition-all outline-none" />
+                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors pointer-events-none ${isDarkMode ? 'text-gray-600 group-focus-within:text-orange-500' : 'text-gray-400 group-focus-within:text-orange-500'}`} size={16} />
+                <input 
+                  type="text" 
+                  placeholder={t('search_templates')} 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  style={isDarkMode ? {
+                    background: '#2A2726',
+                    border: '1px solid transparent',
+                    backgroundImage: 'linear-gradient(#2A2726, #2A2726), linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%)',
+                    backgroundOrigin: 'border-box',
+                    backgroundClip: 'padding-box, border-box',
+                  } : {
+                    background: '#E8E3DD',
+                    border: '1px solid transparent',
+                    backgroundImage: 'linear-gradient(#E8E3DD, #E8E3DD), linear-gradient(0deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%)',
+                    backgroundOrigin: 'border-box',
+                    backgroundClip: 'padding-box, border-box',
+                  }}
+                  className={`w-full pl-11 pr-4 py-3 rounded-2xl text-[14px] font-medium transition-all outline-none focus:ring-4 focus:ring-orange-500/5 ${isDarkMode ? 'text-gray-200 placeholder-gray-600' : 'text-gray-700 placeholder-gray-400'}`} 
+                />
             </div>
-            <div className="flex flex-wrap items-center gap-2 pb-1">
-                <button onClick={() => setSelectedTags("")} className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${selectedTags === "" ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20' : 'bg-white text-gray-500 border-gray-200 hover:border-orange-200 hover:text-orange-500'}`}>{t('all_templates')}</button>
-                {TEMPLATE_TAGS.map(tag => (<button key={tag} onClick={() => setSelectedTags(selectedTags === tag ? "" : tag)} className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${selectedTags === tag ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20' : 'bg-white text-gray-500 border-gray-200 hover:border-orange-200 hover:text-orange-500'}`}>{displayTag(tag)}</button>))}
+            
+            {/* 极简标签选择 */}
+            <div className="flex flex-wrap items-center gap-1.5 pb-1 px-1">
+                <button 
+                  onClick={() => setSelectedTags("")} 
+                  className={`px-3 py-1 rounded-xl tracking-widest capitalize transition-all ${
+                    language === 'cn' 
+                      ? 'text-[11px] font-black' 
+                      : 'text-[8px] font-medium'
+                  } ${selectedTags === "" ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : (isDarkMode ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100')}`}
+                >
+                  {t('all_templates')}
+                </button>
+                {TEMPLATE_TAGS.map(tag => (
+                  <button 
+                    key={tag} 
+                    onClick={() => setSelectedTags(selectedTags === tag ? "" : tag)} 
+                    className={`px-3 py-1 rounded-xl tracking-widest capitalize transition-all ${
+                      language === 'cn' 
+                        ? 'text-[11px] font-black' 
+                        : 'text-[8px] font-medium'
+                    } ${selectedTags === tag ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : (isDarkMode ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100')}`}
+                  >
+                    {displayTag(tag)}
+                  </button>
+                ))}
             </div>
          </div>
       </div>
 
       {/* --- Template List --- */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 custom-scrollbar">
-          <div className="grid grid-cols-1 gap-2.5">
+      <div className="flex-1 overflow-y-auto px-4 py-2 custom-scrollbar">
+          <div className="flex flex-col gap-1">
               {filteredTemplates.map(t_item => (
                   <div 
                       key={t_item.id} 
@@ -177,17 +224,10 @@ export const TemplatesSidebar = React.memo(({
                           setActiveTemplateId(t_item.id);
                           if (isMobile) setIsTemplatesDrawerOpen(false);
                       }} 
-                      className={`group flex flex-col p-4 rounded-2xl border transition-all duration-300 relative text-left cursor-pointer ${t_item.id === activeTemplateId ? 'bg-orange-50 border-orange-200 shadow-sm' : 'bg-white border-transparent hover:border-orange-100 hover:bg-orange-50/30'}`}
+                      className={`group flex flex-col p-4 rounded-2xl transition-all duration-300 relative text-left cursor-pointer ${t_item.id === activeTemplateId ? (isDarkMode ? 'bg-orange-500/20' : 'bg-[#FFE9D0]') : `bg-transparent ${isDarkMode ? 'hover:bg-white/5' : 'hover:bg-[#F2EDE7]'}`}`}
                   >
                       <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5 overflow-hidden flex-1">
-                              {activeTemplateId === t_item.id && !editingTemplateNameId && (
-                                  <div className="relative flex-shrink-0">
-                                      <div className="w-1.5 h-5 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full shadow-md shadow-orange-400/50 animate-in fade-in zoom-in duration-300"></div>
-                                      <div className="absolute inset-0 w-1.5 h-5 bg-orange-50 rounded-full animate-pulse"></div>
-                                  </div>
-                              )}
-                              
+                          <div className="flex items-center gap-2 overflow-hidden flex-1">
                               {editingTemplateNameId === t_item.id ? (
                                 <div className="flex-1 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
                                     <input 
@@ -195,59 +235,61 @@ export const TemplatesSidebar = React.memo(({
                                         type="text" 
                                         value={tempTemplateName}
                                         onChange={(e) => setTempTemplateName(e.target.value)}
-                                        className="w-full px-2 py-1 text-sm font-bold border-b-2 border-orange-500 bg-transparent focus:outline-none"
+                                        className={`w-full px-2 py-1 text-base font-black border-b-2 border-orange-500 bg-transparent focus:outline-none ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                                         placeholder={t('label_placeholder')}
                                         onKeyDown={(e) => e.key === 'Enter' && saveTemplateName()}
                                     />
                                     <div className="flex items-center gap-2">
                                         <button 
                                             onClick={saveTemplateName}
-                                            className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded hover:bg-orange-600 transition-colors"
+                                            className="px-3 py-1 bg-orange-500 text-white text-[10px] font-black rounded-lg hover:bg-orange-600 transition-colors"
                                         >
                                             {t('confirm')}
                                         </button>
                                         <button 
                                             onClick={() => setEditingTemplateNameId(null)}
-                                            className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-bold rounded hover:bg-gray-200 transition-colors"
+                                            className={`px-3 py-1 text-[10px] font-black rounded-lg transition-colors ${isDarkMode ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
                                         >
                                             {t('cancel')}
                                         </button>
                                     </div>
                                 </div>
                               ) : (
-                                <span className={`truncate text-sm transition-all ${activeTemplateId === t_item.id ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>{getLocalized(t_item.name, language)}</span>
+                                <span className={`truncate text-[14px] tracking-tight leading-tight transition-all ${activeTemplateId === t_item.id ? (isDarkMode ? 'font-bold text-orange-400' : 'font-bold text-gray-900') : (isDarkMode ? 'font-semibold text-gray-500 group-hover:text-gray-300' : 'font-semibold text-gray-600 group-hover:text-gray-800')}`}>
+                                  {getLocalized(t_item.name, language)}
+                                </span>
                               )}
                           </div>
-                          
+
                           {!editingTemplateNameId && (
                             <div className={`flex items-center gap-1.5 ${activeTemplateId === t_item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-all duration-300`}>
                                 {INITIAL_TEMPLATES_CONFIG.some(cfg => cfg.id === t_item.id) && (
-                                    <button 
+                                    <button
                                         title={t('reset_template')}
                                         onClick={(e) => { e.stopPropagation(); handleResetTemplate(t_item.id, e); }}
-                                        className="p-1.5 hover:bg-orange-100 rounded-lg text-gray-400 hover:text-orange-500 transition-all duration-200 hover:scale-110"
+                                        className={`p-1.5 rounded-lg transition-all duration-200 hover:scale-110 ${isDarkMode ? 'hover:bg-white/10 text-gray-500 hover:text-orange-400' : 'hover:bg-orange-100 text-gray-400 hover:text-orange-500'}`}
                                     >
                                         <RotateCcw size={13} />
                                     </button>
                                 )}
-                                <button 
+                                <button
                                     title={t('rename')}
                                     onClick={(e) => { e.stopPropagation(); startRenamingTemplate(t_item, e); }}
-                                    className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-orange-600 transition-all duration-200 hover:scale-110"
+                                    className={`p-1.5 rounded-lg transition-all duration-200 hover:scale-110 ${isDarkMode ? 'hover:bg-white/10 text-gray-500 hover:text-orange-400' : 'hover:bg-gray-100 text-gray-400 hover:text-orange-600'}`}
                                 >
                                     <Pencil size={13} />
                                 </button>
-                                <button 
+                                <button
                                     title={t('duplicate')}
                                     onClick={(e) => { e.stopPropagation(); handleDuplicateTemplate(t_item, e); }}
-                                    className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-orange-600 transition-all duration-200 hover:scale-110"
+                                    className={`p-1.5 rounded-lg transition-all duration-200 hover:scale-110 ${isDarkMode ? 'hover:bg-white/10 text-gray-500 hover:text-orange-400' : 'hover:bg-gray-100 text-gray-400 hover:text-orange-600'}`}
                                 >
                                     <CopyIcon size={13} />
                                 </button>
                                 <button
                                     title={t('export_template')}
                                     onClick={(e) => { e.stopPropagation(); handleExportTemplate(t_item); }}
-                                    className="p-1.5 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-all duration-200 hover:scale-110"
+                                    className={`p-1.5 rounded-lg transition-all duration-200 hover:scale-110 ${isDarkMode ? 'hover:bg-white/10 text-gray-500 hover:text-blue-400' : 'hover:bg-blue-50 text-gray-400 hover:text-blue-600'}`}
                                 >
                                     <Download size={13} />
                                 </button>
@@ -255,6 +297,49 @@ export const TemplatesSidebar = React.memo(({
                             </div>
                           )}
                       </div>
+
+                      {/* 选中时展开的功能行 */}
+                      {activeTemplateId === t_item.id && !editingTemplateNameId && (
+                        <div className={`flex items-center gap-1 mt-3 pt-3 border-t animate-in slide-in-from-top-2 duration-300 ${isDarkMode ? 'border-white/5' : 'border-orange-200/30'}`}>
+                            {INITIAL_TEMPLATES_CONFIG.some(cfg => cfg.id === t_item.id) && (
+                                <button 
+                                    title={t('reset_template')}
+                                    onClick={(e) => { e.stopPropagation(); handleResetTemplate(t_item.id, e); }}
+                                    className={`p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'hover:bg-white/5 text-gray-500 hover:text-orange-400' : 'hover:bg-white/50 text-gray-500 hover:text-orange-600'}`}
+                                >
+                                    <RotateCcw size={14} />
+                                </button>
+                            )}
+                            <button 
+                                title={t('rename')}
+                                onClick={(e) => { e.stopPropagation(); startRenamingTemplate(t_item, e); }}
+                                className={`p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'hover:bg-white/5 text-gray-500 hover:text-orange-400' : 'hover:bg-white/50 text-gray-500 hover:text-orange-600'}`}
+                            >
+                                <Pencil size={14} />
+                            </button>
+                            <button 
+                                title={t('duplicate')}
+                                onClick={(e) => { e.stopPropagation(); handleDuplicateTemplate(t_item, e); }}
+                                className={`p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'hover:bg-white/5 text-gray-500 hover:text-orange-400' : 'hover:bg-white/50 text-gray-500 hover:text-orange-600'}`}
+                            >
+                                <CopyIcon size={14} />
+                            </button>
+                            <button 
+                                title={t('export_template')}
+                                onClick={(e) => { e.stopPropagation(); handleExportTemplate(t_item); }}
+                                className={`p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'hover:bg-white/5 text-gray-500 hover:text-blue-400' : 'hover:bg-white/50 text-gray-500 hover:text-blue-600'}`}
+                            >
+                                <Download size={14} />
+                            </button>
+                            <button 
+                                title={t('delete')}
+                                onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t_item.id, e); }}
+                                className={`p-2 rounded-xl transition-all duration-200 ${isDarkMode ? 'hover:bg-white/5 text-gray-500 hover:text-red-400' : 'hover:bg-white/50 text-gray-500 hover:text-red-600'}`}
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                      )}
                   </div>
               ))}
           </div>
@@ -262,33 +347,17 @@ export const TemplatesSidebar = React.memo(({
 
       {/* --- Footer & Create Button --- */}
       <div className="flex-shrink-0">
-          <div className="p-4 border-t border-gray-200/50 bg-white pb-20 md:pb-4 space-y-3">
+          <div className="p-6 pb-10 md:pb-8">
             <PremiumButton
                 onClick={handleAddTemplate}
                 icon={Plus}
                 color="orange"
                 active={true}
-                className="w-full !py-2.5 text-sm transition-all duration-300 transform hover:-translate-y-0.5"
+                isDarkMode={isDarkMode}
+                className="w-full !py-3 text-[15px] font-black transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-orange-500/20"
             >
                 {t('new_template')}
             </PremiumButton>
-          </div>
-          
-          <div className="hidden md:block p-4 pt-0 border-t border-transparent text-[10px] leading-relaxed text-center opacity-60 hover:opacity-100 transition-opacity" style={{ color: '#545454' }}>
-              <div className="flex items-center justify-center gap-2">
-                  <p>{t('author_info')}</p>
-                  <a 
-                      href="https://github.com/TanShilongMario/PromptFill/" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-800 text-white hover:bg-orange-500 transition-all duration-300 hover:scale-110"
-                      title="Visit GitHub Repository"
-                  >
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                      </svg>
-                  </a>
-              </div>
           </div>
       </div>
     </div>
@@ -298,4 +367,3 @@ export const TemplatesSidebar = React.memo(({
 });
 
 TemplatesSidebar.displayName = 'TemplatesSidebar';
-

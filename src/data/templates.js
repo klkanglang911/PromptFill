@@ -32,7 +32,7 @@
 /**
  * 模板系统版本号，每次更新 templates.js 或 banks.js 时请更新此版本号
  */
-export const SYSTEM_DATA_VERSION = "0.7.1";
+export const SYSTEM_DATA_VERSION = "0.7.2";
 
 export const DEFAULT_TEMPLATE_CONTENT = {
   cn: `### Role (角色设定)
@@ -573,6 +573,149 @@ Outside the window, a real {{character_name}} is curiously looking inside at the
 {{ratio}}`
 };
 
+export const TEMPLATE_JAPANESE_PRODUCT_POSTER = {
+  cn: `### 日式产品海报（16:9横构图）
+
+高级日式产品海报，16:9横构图格式，编辑级设计展示{{fruit_1}}汁皮肤包装概念，具有精致的视觉叙事：
+
+**左侧（画布40%）：**
+- **主角产品：** 一个大型{{fruit_1}}汁皮肤包装垂直展示，采用戏剧性柔和灯光，展现超写实的{{fruit_1}}果皮纹理包裹矩形容器，符合{{fruit_1}}特征质感的皮肤纹理，覆盖整个表面，具有该水果特有的自然质感、颜色和细节变化，看起来完全像真正的{{fruit_1}}果皮拉伸覆盖在包装上
+- **下方：** 一个横切的新鲜{{fruit_1}}，展示符合{{fruit_1}}特征的果肉质感，展现其独特的内部结构和颜色
+- **日式排版垂直对齐：** "{{fruit_1}}スキン"（{{fruit_1}}皮肤）采用优雅的细体哥特字体
+- **副标题：** "果汁皮肤 / {{fruit_1}}"采用精致风格
+- **小字设计理念文本（日文）**
+
+**中央（画布30%）：**
+- **大量白色负空间（间 - Ma）**
+- **极简几何元素：** 精致的细线
+- **浮动文字：** "自然な素材"（天然材料）
+- **极简品牌标识**
+- **背景中非常微妙的{{fruit_1}}特征纹理图案（低不透明度）**
+
+**右侧（画布30%）：**
+- **两个{{fruit_1}}汁皮肤包装以不同角度和高度艺术性排列**
+- **一个完整的新鲜{{fruit_1}}，带有符合该水果特征的自然皮肤质感**
+- **排版：** "Natural Packaging / 自然な包装"
+- **标语：** "The skin is the package / 皮膚が包装である"
+- **细节标注指向符合水果特征的皮肤纹理细节**
+
+**设计原则：** 充足的留白，不对称平衡，侘寂美学，无印良品/则武编辑级极简主义
+**色彩调色板：** 符合{{fruit_1}}特征的色调，纯白背景，果肉的特征颜色作为点缀
+**摄影：** 柔和扩散的影棚灯光，超清晰的微距细节展现符合水果特征的纹理，照片级真实渲染
+**关键：** {{fruit_1}}皮肤包装必须看起来极其真实——实际的有机纹理，完全符合该水果的自然特征，包括其特有的质感、颜色和细节，绝非塑料
+
+16:9宽屏，高端日式产品海报，画廊级品质`,
+  en: `### Premium Japanese-style Product Poster (16:9 Landscape)
+
+Premium Japanese-style product poster in 16:9 landscape format, editorial design showcasing {{fruit_1}} juice skin packaging concept with sophisticated visual storytelling:
+
+**LEFT SIDE (40% of canvas):**
+- **Hero product:** One large {{fruit_1}} juice skin package displayed vertically with dramatic soft lighting, showing ultra-realistic {{fruit_1}} peel texture wrapped around rectangular container, skin texture that matches the characteristic features of {{fruit_1}}, covering entire surface, with natural texture, color and detail variations specific to this fruit, looks exactly like real {{fruit_1}} skin stretched over package
+- **Below:** One cross-sectioned fresh {{fruit_1}} showing flesh texture that matches the characteristic features of {{fruit_1}}, displaying its unique internal structure and color
+- **Japanese typography vertically aligned:** "{{fruit_1}}スキン" ({{fruit_1}} Skin) in elegant thin gothic font
+- **Subtitle:** "果汁皮肤 / {{fruit_1}}" in refined style
+- **Small design philosophy text in Japanese**
+
+**CENTER (30% of canvas):**
+- **Generous white negative space (Ma - 間)**
+- **Minimal geometric elements:** delicate thin lines
+- **Floating text:** "自然な素材" (natural materials)
+- **Subtle minimalist brand mark**
+- **Very subtle {{fruit_1}} characteristic texture pattern in background (low opacity)**
+
+**RIGHT SIDE (30% of canvas):**
+- **Two {{fruit_1}} juice skin packages arranged artistically at different angles and heights**
+- **One whole fresh {{fruit_1}} with natural skin texture that matches the characteristic features of this fruit**
+- **Typography:** "Natural Packaging / 自然な包装"
+- **Tagline:** "The skin is the package / 皮膚が包装である"
+- **Detail callouts pointing to skin texture details that match the fruit's characteristics**
+
+**DESIGN PRINCIPLES:** Abundant white space, asymmetrical balance, Wabi-sabi aesthetic, Muji/Noritake editorial minimalism
+**COLOR PALETTE:** tones that match {{fruit_1}} characteristics, pure white background, characteristic flesh color as accent
+**PHOTOGRAPHY:** Soft diffused studio lighting, ultra-sharp macro details showing texture that matches the fruit's characteristics, photorealistic rendering
+**CRITICAL:** The {{fruit_1}} skin packaging must look incredibly realistic - actual organic texture that fully matches the natural characteristics of this fruit, including its unique texture, color and details, NOT plastic
+
+16:9 widescreen, high-end Japanese product poster, gallery quality`
+};
+
+export const TEMPLATE_LUXURY_EDITORIAL = {
+  cn: `### 高级时装编辑部人像
+
+使用上传的参考图作为同一位{{subject}}。严格保持身份：相同的面部结构、肤色、发型。无性别转换。
+
+**姿态与构图：**
+四分之三背影。背部部分朝向镜头，躯干稍微向左倾斜。头部轻轻向右转动，露出干净的侧脸。眼睛轻轻向下看或闭上。肩膀放松。露背是主要的视觉焦点。
+
+**服装：**
+{{clothing}}。深V露背，带有优雅的垂坠感。哑光面料，无光泽，无闪粉，无婚礼元素。
+
+**配饰：**
+精美小巧的耳环。{{jewelry_style}}，带有微妙的宝石细节，沿着脊柱垂下。
+
+**花卉：**
+{{flower_type}}，拿在右肩上方。花朵部分重叠肩膀，营造出层次感的时尚遮挡效果。
+
+**摄影：**
+平视或略高于肩膀高度。85mm人像镜头质感。浅景深，压缩透视。无广角畸变。
+
+**灯光：**
+{{lighting}}。主光来自左上方，照亮侧脸和上背部。微妙的补光展现皮肤纹理。非常柔和的轮廓光勾勒出裙子和花朵。低对比度，平滑的色调过渡。
+
+**背景：**
+{{background_style}}。无环境，无道具，无纹理。
+
+**风格：**
+奢侈时尚杂志美学。优雅、克制、永恒。自然精致的皮肤纹理，不过度磨皮。`,
+  en: `### High-Fashion Luxury Editorial Portrait
+
+Use the uploaded reference image as the same {{subject}}. Preserve identity strictly: same face structure, skin tone, hairstyle. No gender swap.
+
+**POSE & COMPOSITION:**
+Three-quarter back view. Back partially facing camera, torso angled slightly left. Head gently turned to the right, revealing a clean side profile. Eyes softly lowered or closed. Shoulders relaxed. The open back is the main visual focus.
+
+**WARDROBE:**
+{{clothing}}. Deep V open back with elegant drape. Matte fabric, no shine, no glitter, no bridal elements.
+
+**ACCESSORIES:**
+Small delicate earrings. {{jewelry_style}} with subtle gemstone details resting along the spine.
+
+**FLOWERS:**
+{{flower_type}} held over the right shoulder. The flowers partially overlap the shoulder, creating layered fashion blocking.
+
+**CAMERA:**
+Eye-level to slightly above shoulder height. 85mm portrait lens look. Shallow depth of field, compressed perspective. No wide-angle distortion.
+
+**LIGHTING:**
+{{lighting}}. Key light from upper-left, illuminating side face and upper back. Subtle fill light for skin texture. Very soft rim light outlining dress and flowers. Low contrast, smooth tonal transitions.
+
+**BACKGROUND:**
+{{background_style}}. No environment, no props, no texture.
+
+**STYLE:**
+Luxury fashion magazine aesthetic. Elegant, restrained, timeless. Natural refined skin texture, not over-smoothed.`
+};
+
+export const TEMPLATE_STREET_DIALOGUE = {
+  cn: `### 街头的自我“对话”
+
+1. **核心主题与风格：** 一张具有深刻故事性和极佳摄影质感的街头摄影人像作品，捕捉“自我对话”的哲学瞬间。采用自然光影，呈现电影级叙事感和动态模糊艺术效果。
+2. **场景与背景地点：** {{building_cluster}}。时间与光影：{{lighting_atmosphere}}。光线聚焦于中心人物。氛围：忙碌、疏离，充满动态与静谧的对比。
+3. **核心人物描述位置与状态：** 位于画面正中央，静止站立，神态若有所思或平静凝视镜头，与周围环境的匆忙形成鲜明对比。着装：{{clothing}}，面部与上传图片高度一致
+4. **周边人群描述（关键叙事元素）身份与着装：** 所有路过行人都是核心人物的“不同自我”，身着代表其社会角色的服装：周围人物面部需要保持与上传图片的高度一致，众多不同着装的“我”在核心人物周围穿梭，周边人物快速移动，产生了较大的动态模糊，周边人物全部有移动产生的残影，极大的动态模糊和视觉残留，与核心人物的静态形成了鲜明对比，周边人物与核心人物都是一样的面孔和人物，不要添加其他无关人物，周边人物需要与核心人物有准确的前后关系。
+5. **摄影技术与构图镜头与景深：** {{lens_param}}，偏向与人物特写，较大的景深。核心人物面部和上身清晰锐利，前景和背景（包括动态模糊的人群和街头环境）适度虚化。半身像为主构图：中心构图，核心人物类似半身像，处画面中心较大位置。相机视角稍稍高出人物并微微向下俯视，只有核心人物抬头看向镜头，{{ratio}}。
+6. **画质与色调：** 高分辨率，细腻的胶片质感，轻微颗粒感。色调以暖橙色和深蓝色阴影为主，色彩鲜明但有层次。
+7. **情绪与故事：** 传递出孤独、内省、身份多元性与内心对话的复杂情感。画面在动态中凝结了一个安静的哲学瞬间`,
+  en: `### Street Self-Dialogue
+
+1. **CORE THEME & STYLE:** A deeply storytelling street photography portrait capturing a philosophical moment of "self-dialogue." Uses natural lighting, cinematic narrative feel, and motion blur artistic effects.
+2. **SCENE & BACKGROUND:** {{building_cluster}}. Time & Lighting: {{lighting_atmosphere}}. Light focused on the central character. Atmosphere: Busy, alienated, filled with contrast between dynamics and tranquility.
+3. **CENTRAL CHARACTER:** Located in the center, standing still, with a pensive expression or calmly staring at the camera, forming a sharp contrast with the rush of the surrounding environment. Wardrobe: {{clothing}}, facial features highly consistent with the uploaded image.
+4. **SURROUNDING CROWD (KEY NARRATIVE ELEMENT):** All passing pedestrians are "different selves" of the central character, wearing clothes representing their social roles: surrounding characters' faces must remain highly consistent with the uploaded image. Numerous "selves" in different outfits weave around the central character. Surrounding characters move rapidly, creating significant motion blur and visual trailing, contrasting with the static nature of the central character. Surrounding characters and the central character share the same face and identity—do not add irrelevant people. Surrounding characters need accurate spatial relationships (front/back) with the central character.
+5. **PHOTOGRAPHY & COMPOSITION:** {{lens_param}}, leaning towards character close-up with larger depth of field. Central character's face and upper body are sharp and clear, while foreground and background (including motion-blurred crowd and street environment) are moderately blurred. Composition: Central composition, half-body style, occupying a large portion of the center. Camera angle slightly above the character looking slightly downward, only the central character looks up at the camera, {{ratio}}.
+6. **QUALITY & TONE:** High resolution, delicate film texture, slight grain. Tones dominated by warm oranges and deep blue shadows, vivid but layered colors.
+7. **EMOTION & STORY:** Conveys feelings of loneliness, introspection, identity multiplicity, and the complexity of inner dialogue. The image freezes a quiet philosophical moment within dynamics.`
+};
+
 /**
  * 可用的模板标签
  */
@@ -843,6 +986,51 @@ export const INITIAL_TEMPLATES_CONFIG = [
       "ratio": { cn: "4:3横构图", en: "4:3 Horizontal" }
     },
     tags: ["摄影", "创意", "卡通"],
+    language: ["cn", "en"]
+  },
+  {
+    id: "tpl_japanese_product_poster",
+    name: { cn: "日式产品海报", en: "Japanese Product Poster" },
+    content: TEMPLATE_JAPANESE_PRODUCT_POSTER,
+    imageUrl: "https://s3.bmp.ovh/imgs/2025/12/25/a574127d24ac34e3.png",
+    author: "@berryxia（Berryxia.AI）",
+    selections: {
+      "fruit_1-0": { cn: "柠檬", en: "Lemon" },
+      "ratio": { cn: "16:9横构图", en: "16:9 Horizontal" }
+    },
+    tags: ["产品", "创意", "摄影"],
+    language: ["cn", "en"]
+  },
+  {
+    id: "tpl_luxury_editorial",
+    name: { cn: "高级时装露背人像", en: "Luxury Editorial Portrait" },
+    content: TEMPLATE_LUXURY_EDITORIAL,
+    imageUrl: "https://s3.bmp.ovh/imgs/2025/12/25/bb94a5f7b87af2ee.jpg",
+    author: "@sidona",
+    selections: {
+      "subject": { cn: "女性", en: "Woman" },
+      "clothing": { cn: "极简黑色高级定制礼服", en: "Minimalist black couture gown" },
+      "background_style": { cn: "干净的纯白影棚背景", en: "Clean pure white studio background" },
+      "lighting": { cn: "柔和的编辑级影棚布光", en: "Soft editorial studio lighting" },
+      "ratio": { cn: "3:4竖构图", en: "3:4 Vertical" }
+    },
+    tags: ["人物", "摄影", "创意"],
+    language: ["cn", "en"]
+  },
+  {
+    id: "tpl_street_self_dialogue",
+    name: { cn: "街头的自我对话", en: "Street Self-Dialogue" },
+    content: TEMPLATE_STREET_DIALOGUE,
+    imageUrl: "https://s3.bmp.ovh/imgs/2025/12/25/fd3cbc98f5afa970.png",
+    author: "@MarioTan",
+    selections: {
+      "building_cluster": { cn: "纽约摩天大楼群", en: "New York skyscraper cluster" },
+      "lighting_atmosphere": { cn: "夕阳余晖", en: "Sunset afterglow" },
+      "clothing": { cn: "黑色修身西装", en: "Black slim-fit suit" },
+      "lens_param": { cn: "85mm, f/1.8", en: "85mm, f/1.8" },
+      "ratio": { cn: "3:4竖构图", en: "3:4 Vertical" }
+    },
+    tags: ["人物", "摄影", "创意"],
     language: ["cn", "en"]
   }
 ];

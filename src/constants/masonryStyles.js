@@ -45,7 +45,7 @@ export const MASONRY_STYLES = {
     newCardIconWrapper: "w-16 h-16 rounded-full bg-white text-orange-500 flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300",
     imageWrapper: "relative w-full h-full",
     image: "w-full h-auto object-cover transition-transform duration-700 ease-out group-hover:scale-110",
-    infoArea: "absolute bottom-0 left-0 right-0 p-6 bg-white/10 backdrop-blur-md border-t border-white/10 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out text-white",
+    infoArea: "absolute bottom-0 left-0 right-0 p-6 bg-white/10 backdrop-blur-md border-t border-white/10 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out text-white rounded-b-[30px]",
     titleClass: "font-bold text-lg text-white leading-snug drop-shadow-md",
     newCardIconSize: 32,
     showNewCardText: true,

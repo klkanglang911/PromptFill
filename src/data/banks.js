@@ -710,6 +710,43 @@ export const INITIAL_BANKS = {
       { cn: "轻盈的羽毛", en: "Light feather" },
       { cn: "灵动的音符", en: "Lively musical note" }
     ]
+  },
+  fruit: {
+    label: { cn: "水果", en: "Fruit" },
+    category: "item",
+    options: [
+      { cn: "猕猴桃", en: "Kiwi" },
+      { cn: "橙子", en: "Orange" },
+      { cn: "苹果", en: "Apple" },
+      { cn: "草莓", en: "Strawberry" },
+      { cn: "柠檬", en: "Lemon" },
+      { cn: "葡萄", en: "Grape" },
+      { cn: "芒果", en: "Mango" },
+      { cn: "椰子", en: "Coconut" }
+    ]
+  },
+  jewelry_style: {
+    label: { cn: "珠宝样式", en: "Jewelry Style" },
+    category: "item",
+    options: [
+      { cn: "精美的金色背链", en: "Fine gold back necklace" },
+      { cn: "简约银色链条", en: "Minimalist silver chain" },
+      { cn: "珍珠身体链", en: "Pearl body chain" },
+      { cn: "钻石露背项链", en: "Diamond back drop necklace" },
+      { cn: "祖母绿吊坠背链", en: "Emerald pendant back necklace" }
+    ]
+  },
+  flower_type: {
+    label: { cn: "花卉品种", en: "Flower Type" },
+    category: "item",
+    options: [
+      { cn: "一束深红色玫瑰", en: "A bouquet of deep red roses" },
+      { cn: "优雅的白色马蹄莲", en: "Elegant white calla lilies" },
+      { cn: "淡粉色牡丹", en: "Pale pink peonies" },
+      { cn: "名贵的深色兰花", en: "Exotic dark orchids" },
+      { cn: "干枯的桉树叶", en: "Dried eucalyptus leaves" },
+      { cn: "鲜艳的向日葵", en: "Vibrant sunflowers" }
+    ]
   }
 };
 
@@ -775,5 +812,8 @@ export const INITIAL_DEFAULTS = {
   rain_shape: { cn: "芭蕾舞者", en: "Ballerina" },
   art_type: { cn: "美术学", en: "Fine Arts" },
   show_name: { cn: "龙猫", en: "My Neighbor Totoro" },
-  character_name: { cn: "龙猫", en: "Totoro" }
+  character_name: { cn: "龙猫", en: "Totoro" },
+  fruit: { cn: "柠檬", en: "Lemon" },
+  jewelry_style: { cn: "精美的金色背链", en: "Fine gold back necklace" },
+  flower_type: { cn: "一束深红色玫瑰", en: "A bouquet of deep red roses" }
 };
