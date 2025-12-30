@@ -12,3 +12,5 @@ export { BanksSidebar, CategoryManager, InsertVariableModal, AddBankModal } from
 export { DiscoveryView } from './DiscoveryView';
 export { MobileSettingsView } from './MobileSettingsView';
 export { AuthModal } from './AuthModal';
+export { FinishEditDialog } from './FinishEditDialog';
+export { CopyrightModal } from './CopyrightModal';

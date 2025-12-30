@@ -24,7 +24,7 @@ import { templateApi, versionApi, authApi, userTemplateApi } from './services/ap
 import { useStickyState } from './hooks/useStickyState';
 
 // ====== 导入 UI 组件 ======
-import { Variable, VisualEditor, PremiumButton, EditorToolbar, Lightbox, TemplatePreview, TemplatesSidebar, BanksSidebar, CategoryManager, InsertVariableModal, AddBankModal, DiscoveryView, MobileSettingsView, AuthModal } from './components';
+import { Variable, VisualEditor, PremiumButton, EditorToolbar, Lightbox, TemplatePreview, TemplatesSidebar, BanksSidebar, CategoryManager, InsertVariableModal, AddBankModal, DiscoveryView, MobileSettingsView, AuthModal, FinishEditDialog, CopyrightModal } from './components';
 import MobileTabBar from './components/MobileTabBar';
 
 // --- 组件：图片 3D 预览弹窗 (优化性能，状态局部化) ---
@@ -654,6 +654,11 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  // 完成编辑确认对话框和版权申请弹窗状态
+  const [isFinishEditDialogOpen, setIsFinishEditDialogOpen] = useState(false);
+  const [isCopyrightModalOpen, setIsCopyrightModalOpen] = useState(false);
+  const [copyrightInitialData, setCopyrightInitialData] = useState({});
+
   // 检查用户登录状态
   useEffect(() => {
     const checkAuth = async () => {
@@ -1098,8 +1103,53 @@ const App = () => {
     }
   };
 
-  // 完成编辑 - 切换到预览模式并显示保存成功提示
+  // 完成编辑 - 打开确认对话框
   const handleFinishEditing = () => {
+    setIsFinishEditDialogOpen(true);
+  };
+
+  // 确认完成编辑（来自确认对话框）
+  const handleConfirmFinishEdit = (data) => {
+    // 可以保存来源信息到模板中
+    if (activeTemplate && data) {
+      setTemplates(prev => prev.map(t =>
+        t.id === activeTemplate.id
+          ? {
+              ...t,
+              sourceType: data.sourceType,
+              inspirationSource: data.inspirationSource,
+              originalAuthor: data.originalAuthor
+            }
+          : t
+      ));
+    }
+    setIsEditing(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
+  };
+
+  // 打开版权申请弹窗
+  const handleOpenCopyright = (data) => {
+    setCopyrightInitialData(data);
+    setIsCopyrightModalOpen(true);
+  };
+
+  // 处理版权申请提交
+  const handleCopyrightSubmit = (copyrightData) => {
+    console.log('版权申请已提交:', copyrightData);
+    // 保存版权信息到模板
+    if (activeTemplate) {
+      setTemplates(prev => prev.map(t =>
+        t.id === activeTemplate.id
+          ? {
+              ...t,
+              copyright: copyrightData,
+              sourceType: 'original',
+              originalAuthor: copyrightData.authorName
+            }
+          : t
+      ));
+    }
     setIsEditing(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2000);
@@ -3216,6 +3266,25 @@ const App = () => {
           setCurrentUser(user);
           setIsAuthModalOpen(false);
         }}
+        t={t}
+      />
+
+      {/* --- 完成编辑确认对话框 --- */}
+      <FinishEditDialog
+        isOpen={isFinishEditDialogOpen}
+        onClose={() => setIsFinishEditDialogOpen(false)}
+        onConfirm={handleConfirmFinishEdit}
+        onOpenCopyright={handleOpenCopyright}
+        t={t}
+      />
+
+      {/* --- 版权存证表单弹窗 --- */}
+      <CopyrightModal
+        isOpen={isCopyrightModalOpen}
+        onClose={() => setIsCopyrightModalOpen(false)}
+        onSubmit={handleCopyrightSubmit}
+        initialData={copyrightInitialData}
+        templateName={activeTemplate ? getLocalized(activeTemplate.name, language) : ''}
         t={t}
       />
 
